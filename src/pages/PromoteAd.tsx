@@ -60,8 +60,8 @@ export default function PromoteAd() {
       toast.error("Please fill in all required fields");
       return;
     }
-    toast.success("Your ad has been submitted for review!", {
-      description: "We'll notify you once it's live.",
+    toast.success("Your offer is now live!", {
+      description: "Customers in your city can now discover your deal.",
     });
     setTimeout(() => navigate("/"), 2000);
   };
