@@ -82,7 +82,7 @@ export default function PromoteAd() {
     toast.success("Your offer is now live!", {
       description: "Customers in your city can now discover your deal.",
     });
-    setTimeout(() => navigate("/search"), 1500);
+    setTimeout(() => navigate("/"), 1500);
   };
 
   return (
