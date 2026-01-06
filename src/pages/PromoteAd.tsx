@@ -11,10 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Logo } from "@/components/ui/Logo";
 import { cities, popularKeywords } from "@/data/mockAds";
+import { useAds } from "@/context/AdsContext";
 import { toast } from "sonner";
 
 export default function PromoteAd() {
   const navigate = useNavigate();
+  const { addAd } = useAds();
   const [images, setImages] = useState<string[]>([]);
   const [keywords, setKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState("");
@@ -22,6 +24,7 @@ export default function PromoteAd() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [discount, setDiscount] = useState("");
+  const [businessName, setBusinessName] = useState("");
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -60,10 +63,26 @@ export default function PromoteAd() {
       toast.error("Please fill in all required fields");
       return;
     }
+    
+    // Calculate valid until date (30 days from now)
+    const validUntil = new Date();
+    validUntil.setDate(validUntil.getDate() + 30);
+    
+    addAd({
+      title,
+      description: description || title,
+      imageUrl: images[0] || "https://images.unsplash.com/photo-1557821552-17105176677c?w=400&h=300&fit=crop",
+      keywords,
+      city,
+      discount: discount || "SPECIAL OFFER",
+      businessName: businessName || "Local Business",
+      validUntil: validUntil.toISOString().split("T")[0],
+    });
+    
     toast.success("Your offer is now live!", {
       description: "Customers in your city can now discover your deal.",
     });
-    setTimeout(() => navigate("/"), 2000);
+    setTimeout(() => navigate("/search"), 1500);
   };
 
   return (
@@ -184,6 +203,16 @@ export default function PromoteAd() {
                     placeholder="e.g., 50% OFF, BOGO, FREE"
                     value={discount}
                     onChange={(e) => setDiscount(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="businessName">Business Name</Label>
+                  <Input
+                    id="businessName"
+                    placeholder="e.g., Pizza Paradise"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
                     className="mt-1.5"
                   />
                 </div>

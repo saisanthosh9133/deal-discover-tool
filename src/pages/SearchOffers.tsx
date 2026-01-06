@@ -10,9 +10,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Logo } from "@/components/ui/Logo";
 import { AdCard } from "@/components/AdCard";
-import { mockAds, cities, popularKeywords } from "@/data/mockAds";
+import { cities, popularKeywords } from "@/data/mockAds";
+import { useAds } from "@/context/AdsContext";
 
 export default function SearchOffers() {
+  const { ads } = useAds();
   const [city, setCity] = useState("");
   const [keywordInput, setKeywordInput] = useState("");
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
@@ -33,7 +35,7 @@ export default function SearchOffers() {
   const filteredAds = useMemo(() => {
     if (!hasSearched) return [];
     
-    return mockAds.filter((ad) => {
+    return ads.filter((ad) => {
       const cityMatch = !city || ad.city.toLowerCase() === city.toLowerCase();
       const keywordMatch =
         selectedKeywords.length === 0 ||
