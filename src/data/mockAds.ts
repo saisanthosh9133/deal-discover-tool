@@ -20,7 +20,7 @@ export const mockAds: Ad[] = [
     city: "Mumbai",
     discount: "50% OFF",
     businessName: "Pizza Paradise",
-    validUntil: "2025-02-28",
+    validUntil: "2026-06-30",
   },
   {
     id: "2",
@@ -31,7 +31,7 @@ export const mockAds: Ad[] = [
     city: "Delhi",
     discount: "FREE TRIAL",
     businessName: "FitZone Elite",
-    validUntil: "2025-03-15",
+    validUntil: "2026-07-15",
   },
   {
     id: "3",
@@ -42,7 +42,7 @@ export const mockAds: Ad[] = [
     city: "Mumbai",
     discount: "BOGO",
     businessName: "Serenity Spa",
-    validUntil: "2025-02-14",
+    validUntil: "2026-06-14",
   },
   {
     id: "4",
@@ -53,7 +53,7 @@ export const mockAds: Ad[] = [
     city: "Bangalore",
     discount: "30% OFF",
     businessName: "TechMart",
-    validUntil: "2025-01-31",
+    validUntil: "2026-06-30",
   },
   {
     id: "5",
@@ -64,7 +64,7 @@ export const mockAds: Ad[] = [
     city: "Delhi",
     discount: "BUY 2 GET 1",
     businessName: "Bean Bliss Cafe",
-    validUntil: "2025-03-01",
+    validUntil: "2026-07-01",
   },
   {
     id: "6",
@@ -75,7 +75,7 @@ export const mockAds: Ad[] = [
     city: "Mumbai",
     discount: "UP TO 70% OFF",
     businessName: "Style Studio",
-    validUntil: "2025-02-20",
+    validUntil: "2026-06-20",
   },
   {
     id: "7",
@@ -86,7 +86,7 @@ export const mockAds: Ad[] = [
     city: "Bangalore",
     discount: "FREE ENTRY",
     businessName: "FunLand",
-    validUntil: "2025-04-30",
+    validUntil: "2026-08-30",
   },
   {
     id: "8",
@@ -97,7 +97,7 @@ export const mockAds: Ad[] = [
     city: "Delhi",
     discount: "₹199 ONLY",
     businessName: "SmileCare Clinic",
-    validUntil: "2025-02-28",
+    validUntil: "2026-06-28",
   },
 ];
 

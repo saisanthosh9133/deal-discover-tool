@@ -9,7 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Logo } from "@/components/ui/Logo";
-import { LogOut, User, LogIn, MapPin } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
+import { LogOut, User, LogIn, MapPin, Megaphone } from "lucide-react";
 
 export default function NavBar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -21,22 +22,27 @@ export default function NavBar() {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="bg-card/80 backdrop-blur-md shadow-sm border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <Logo />
-            <span className="text-xl font-bold text-indigo-600">DealDiscover</span>
+            <Logo size="sm" />
+            <span className="text-xl font-bold text-primary hidden sm:inline">
+              Deal<span className="text-muted-foreground">Discover</span>
+            </span>
           </Link>
 
-          {/* Right side - Auth actions */}
-          <div className="flex items-center gap-4">
+          {/* Right side */}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 {/* Promote Link */}
-                <Link to="/promote">
-                  <Button variant="outline" size="sm">
+                <Link to="/promote" className="hidden sm:block">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Megaphone className="w-4 h-4" />
                     Promote Deal
                   </Button>
                 </Link>
@@ -45,32 +51,42 @@ export default function NavBar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="gap-2">
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-semibold">
+                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="hidden sm:inline text-sm font-medium">{user.name}</span>
+                      <span className="hidden sm:inline text-sm font-medium text-foreground">
+                        {user.name}
+                      </span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <div className="px-2 py-1.5">
-                      <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                      <p className="text-xs text-gray-600">{user.email}</p>
+                      <p className="text-sm font-semibold text-foreground">{user.name}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link to="/profile" className="cursor-pointer">
                         <User className="w-4 h-4 mr-2" />
-                        Profile
+                        My Profile
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/admin/locations" className="cursor-pointer">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        Manage Locations
+                      <Link to="/promote" className="cursor-pointer sm:hidden">
+                        <Megaphone className="w-4 h-4 mr-2" />
+                        Promote Deal
                       </Link>
                     </DropdownMenuItem>
+                    {user.role === "ADMIN" && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/locations" className="cursor-pointer">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          Manage Locations
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                       <LogOut className="w-4 h-4 mr-2" />
                       Logout
                     </DropdownMenuItem>
@@ -83,9 +99,9 @@ export default function NavBar() {
                   <Button size="sm">Get Started</Button>
                 </Link>
                 <Link to="/login">
-                  <Button variant="outline" size="sm">
-                    <LogIn className="w-4 h-4 mr-2" />
-                    Sign In
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <LogIn className="w-4 h-4" />
+                    <span className="hidden sm:inline">Sign In</span>
                   </Button>
                 </Link>
               </div>

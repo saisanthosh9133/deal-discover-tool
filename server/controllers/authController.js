@@ -66,7 +66,7 @@ export const register = async (req, res) => {
     // Generate token
     const token = generateToken(user._id, user.role);
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       token,
       user: user.toJSON(),
@@ -130,7 +130,7 @@ export const login = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,

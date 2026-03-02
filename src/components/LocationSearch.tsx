@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocationSearch, useLocations } from "@/hooks/useLocations";
 import { useGeolocation, findNearestCities } from "@/hooks/useGeolocation";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,14 @@ export default function LocationSearch({
   >([]);
   const [showNearby, setShowNearby] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Stabilize handleSelectLocation with useCallback to prevent infinite re-renders
+  const handleSelectLocation = useCallback((location: string) => {
+    setInputValue(location);
+    onChange(location);
+    setIsOpen(false);
+    setShowNearby(false);
+  }, [onChange]);
 
   // Update nearest cities when geolocation coordinates are obtained
   useEffect(() => {
@@ -87,13 +95,6 @@ export default function LocationSearch({
     setShowNearby(false);
     searchLocations(newValue);
     setIsOpen(true);
-  };
-
-  const handleSelectLocation = (location: string) => {
-    setInputValue(location);
-    onChange(location);
-    setIsOpen(false);
-    setShowNearby(false);
   };
 
   const handleClear = () => {

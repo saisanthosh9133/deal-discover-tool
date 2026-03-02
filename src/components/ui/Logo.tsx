@@ -54,7 +54,7 @@ export const Logo = ({ size = "md", showText = true }: LogoProps) => {
               transition={{ delay: i * 0.05, duration: 0.3 }}
             />
           ))}
-          {/* Inner design - B letter stylized */}
+          {/* Inner design - D letter stylized */}
           <text
             x="50"
             y="58"
@@ -64,14 +64,14 @@ export const Logo = ({ size = "md", showText = true }: LogoProps) => {
             fontWeight="bold"
             fontFamily="serif"
           >
-            B
+            D
           </text>
         </svg>
       </div>
       {showText && (
         <div className={`font-display font-bold tracking-tight ${currentSize.text}`}>
-          <span className="text-primary">BENIFIT</span>
-          <span className="text-muted-foreground ml-1">ME</span>
+          <span className="text-primary">Deal</span>
+          <span className="text-muted-foreground">Discover</span>
         </div>
       )}
     </motion.div>

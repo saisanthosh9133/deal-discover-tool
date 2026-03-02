@@ -12,7 +12,7 @@ import {
   incrementPopularity,
   getNearbyLocations,
 } from "../controllers/locationController.js";
-import { authMiddleware } from "../middleware/authMiddleware.js";
+import { authMiddleware, adminMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -24,13 +24,13 @@ router.get("/states", getAllStates); // Get all states
 router.get("/state/:state", getLocationsByState); // Get locations by state
 router.get("/:id", getLocationById); // Get single location
 
-// Admin endpoints (requires authentication - can add admin check later)
-router.post("/", authMiddleware, createLocation); // Create location
-router.put("/:id", authMiddleware, updateLocation); // Update location
-router.patch("/:id/toggle", authMiddleware, toggleLocation); // Toggle active status
-router.delete("/:id", authMiddleware, deleteLocation); // Delete location
+// Admin endpoints (requires authentication + admin role)
+router.post("/", authMiddleware, adminMiddleware, createLocation); // Create location
+router.put("/:id", authMiddleware, adminMiddleware, updateLocation); // Update location
+router.patch("/:id/toggle", authMiddleware, adminMiddleware, toggleLocation); // Toggle active status
+router.delete("/:id", authMiddleware, adminMiddleware, deleteLocation); // Delete location
 
-// Utility endpoint
-router.post("/:id/popularity", incrementPopularity); // Track popularity
+// Utility endpoint (auth required to prevent abuse)
+router.post("/:id/popularity", authMiddleware, incrementPopularity); // Track popularity
 
 export default router;

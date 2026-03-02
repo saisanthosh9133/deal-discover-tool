@@ -57,32 +57,43 @@ export default function PromoteAd() {
     setKeywords((prev) => prev.filter((k) => k !== keyword));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !city || keywords.length === 0) {
       toast.error("Please fill in all required fields");
       return;
     }
-    
-    // Calculate valid until date (30 days from now)
-    const validUntil = new Date();
-    validUntil.setDate(validUntil.getDate() + 30);
-    
-    addAd({
-      title,
-      description: description || title,
-      imageUrl: images[0] || "https://images.unsplash.com/photo-1557821552-17105176677c?w=400&h=300&fit=crop",
-      keywords,
-      city,
-      discount: discount || "SPECIAL OFFER",
-      businessName: businessName || "Local Business",
-      validUntil: validUntil.toISOString().split("T")[0],
-    });
-    
-    toast.success("Your offer is now live!", {
-      description: "Customers in your city can now discover your deal.",
-    });
-    setTimeout(() => navigate("/"), 1500);
+
+    setIsSubmitting(true);
+
+    try {
+      // Calculate valid until date (30 days from now)
+      const validUntil = new Date();
+      validUntil.setDate(validUntil.getDate() + 30);
+
+      await addAd({
+        title,
+        description: description || title,
+        imageUrl: images[0] || "",
+        keywords,
+        city,
+        discount: discount || "SPECIAL OFFER",
+        businessName: businessName || "Local Business",
+        validUntil: validUntil.toISOString().split("T")[0],
+      });
+
+      toast.success("Your offer is now live!", {
+        description: "Customers in your city can now discover your deal.",
+      });
+      setTimeout(() => navigate("/"), 1500);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to create ad. Please try again.";
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

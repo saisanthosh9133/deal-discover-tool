@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 export const authMiddleware = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
@@ -31,4 +31,23 @@ export const authMiddleware = (req, res, next) => {
       message,
     });
   }
+};
+
+// Admin-only middleware — must be used AFTER authMiddleware
+export const adminMiddleware = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: "Authentication required",
+    });
+  }
+
+  if (req.user.role !== "ADMIN") {
+    return res.status(403).json({
+      success: false,
+      message: "Admin access required",
+    });
+  }
+
+  next();
 };

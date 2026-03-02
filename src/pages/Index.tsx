@@ -11,12 +11,13 @@ import { Logo } from "@/components/ui/Logo";
 import NavBar from "@/components/NavBar";
 import LocationSearch from "@/components/LocationSearch";
 import { AdCard } from "@/components/AdCard";
+import { AdCardSkeleton } from "@/components/Skeletons";
 import { popularKeywords } from "@/data/mockAds";
 import { useAds } from "@/context/AdsContext";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Index() {
-  const { ads } = useAds();
+  const { ads, loading } = useAds();
   const { isAuthenticated } = useAuth();
   const [city, setCity] = useState("");
   const [keywordInput, setKeywordInput] = useState("");
@@ -37,7 +38,7 @@ export default function Index() {
 
   const filteredAds = useMemo(() => {
     if (!hasSearched) return [];
-    
+
     return ads.filter((ad) => {
       const cityMatch = !city || ad.city.toLowerCase() === city.toLowerCase();
       const keywordMatch =
@@ -213,7 +214,13 @@ export default function Index() {
               </div>
 
               <AnimatePresence mode="popLayout">
-                {filteredAds.length > 0 ? (
+                {loading ? (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <AdCardSkeleton key={`skeleton-${i}`} />
+                    ))}
+                  </div>
+                ) : filteredAds.length > 0 ? (
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredAds.map((ad, index) => (
                       <AdCard key={ad.id} ad={ad} index={index} />
@@ -282,10 +289,10 @@ export default function Index() {
             <div className="text-center md:text-left">
               <Logo size="sm" />
               <p className="text-sm text-muted-foreground mt-2">
-                © 2025 BENIFIT ME. All rights reserved.
+                © 2026 DealDiscover. All rights reserved.
               </p>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <div className="text-center md:text-right">
                 <p className="font-semibold text-foreground">Have a business?</p>
