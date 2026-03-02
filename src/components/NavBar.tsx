@@ -28,9 +28,6 @@ export default function NavBar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <Logo size="sm" />
-            <span className="text-xl font-bold text-primary hidden sm:inline">
-              Deal<span className="text-muted-foreground">Discover</span>
-            </span>
           </Link>
 
           {/* Right side */}

@@ -74,16 +74,7 @@ export default function Index() {
         </div>
 
         <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <header className="flex items-center justify-center mb-10">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Logo size="lg" />
-            </motion.div>
-          </header>
+
 
           {/* Main Hero Content */}
           <div className="text-center max-w-4xl mx-auto mb-10">
