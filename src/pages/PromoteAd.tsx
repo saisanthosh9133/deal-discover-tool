@@ -8,9 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Logo } from "@/components/ui/Logo";
-import { cities, popularKeywords } from "@/data/mockAds";
+import LocationSearch from "@/components/LocationSearch";
+import { popularKeywords } from "@/data/mockAds";
 import { useAds } from "@/context/AdsContext";
 import { toast } from "sonner";
 
@@ -227,21 +227,12 @@ export default function PromoteAd() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label>City *</Label>
-                  <Select value={city} onValueChange={setCity}>
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Select your city" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cities.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <LocationSearch
+                  value={city}
+                  onChange={setCity}
+                  placeholder="Search your city..."
+                  label="City *"
+                />
                 <div>
                   <Label>Keywords *</Label>
                   <div className="flex gap-2 mt-1.5">

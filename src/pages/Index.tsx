@@ -7,14 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Logo } from "@/components/ui/Logo";
+import NavBar from "@/components/NavBar";
+import LocationSearch from "@/components/LocationSearch";
 import { AdCard } from "@/components/AdCard";
-import { cities, popularKeywords } from "@/data/mockAds";
+import { popularKeywords } from "@/data/mockAds";
 import { useAds } from "@/context/AdsContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Index() {
   const { ads } = useAds();
+  const { isAuthenticated } = useAuth();
   const [city, setCity] = useState("");
   const [keywordInput, setKeywordInput] = useState("");
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
@@ -58,6 +61,9 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Navigation Bar */}
+      <NavBar />
+
       {/* Hero Section */}
       <section className="relative flex-1">
         {/* Background decoration */}
@@ -103,24 +109,12 @@ export default function Index() {
             <Card className="shadow-card mb-8 max-w-3xl mx-auto">
               <CardContent className="p-6">
                 <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <Label className="flex items-center gap-2 mb-2">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      Location
-                    </Label>
-                    <Select value={city} onValueChange={setCity}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your city" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cities.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <LocationSearch
+                    value={city}
+                    onChange={setCity}
+                    placeholder="Search your city..."
+                    label="Location"
+                  />
                   <div>
                     <Label className="flex items-center gap-2 mb-2">
                       <Filter className="w-4 h-4 text-primary" />
