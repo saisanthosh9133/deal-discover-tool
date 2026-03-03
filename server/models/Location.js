@@ -50,7 +50,6 @@ const locationSchema = new mongoose.Schema({
 });
 
 // Index for faster searches
-locationSchema.index({ name: 1 });
 locationSchema.index({ state: 1 });
 locationSchema.index({ tier: 1 });
 locationSchema.index({ isActive: 1 });
