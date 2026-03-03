@@ -12,7 +12,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "seed:locations": "node server/seeds/seedLocations.js"
+    "seed:locations": "node server/seeds/seedLocations.js",
+    "seed:all-cities": "node server/seeds/seedAllCities.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
