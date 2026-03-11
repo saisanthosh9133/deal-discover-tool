@@ -10,16 +10,11 @@ import authRoutes from "./routes/auth.js";
 import locationRoutes from "./routes/locations.js";
 import adRoutes from "./routes/ads.js";
 
-<<<<<<< HEAD
 // Load .env from server/ directory (works regardless of CWD)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, ".env") });
 // Also try project root .env as fallback
 dotenv.config();
-=======
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, ".env") });
->>>>>>> fecfb75 (Role: You are a Senior Frontend Architect specializing in component consolidation and dry principles.)
 
 const app = express();
 const PORT = process.env.PORT || 5000;

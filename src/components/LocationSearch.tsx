@@ -36,6 +36,11 @@ export default function LocationSearch({
   const [geoLoading, setGeoLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Keep input display in sync when parent resets value (e.g. clearFilters)
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+
   const handleSelectLocation = useCallback(
     (location: string) => {
       setInputValue(location);
@@ -91,7 +96,7 @@ export default function LocationSearch({
           const { latitude, longitude } = position.coords;
           // Use server-side nearest search — fast, no need to download all cities
           const response = await api.get("/locations/nearby", {
-            params: { lat: latitude, lng: longitude, limit: 5 },
+            params: { latitude, longitude, limit: 5 },
           });
 
           if (response.data.success && response.data.locations.length > 0) {
