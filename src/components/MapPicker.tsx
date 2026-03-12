@@ -2,8 +2,9 @@ import { useState, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { LocateFixed } from 'lucide-react';
+import { LocateFixed, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
+import { toast } from 'sonner';
 
 // Fix for default Leaflet marker icons in React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -70,18 +71,36 @@ function LocationMarker({ position, onChange, readonly }: {
 
 export function MapPicker({ value, onChange, readonly = false }: MapPickerProps) {
     const [map, setMap] = useState<L.Map | null>(null);
+    const [isLocating, setIsLocating] = useState(false);
 
     const position = value ? new L.LatLng(value.lat, value.lng) : null;
 
     const handleLocateMe = () => {
-        if (!map) return;
+        if (!navigator.geolocation) {
+            toast.error("Geolocation is not supported in your browser");
+            return;
+        }
 
-        map.locate().on("locationfound", function (e) {
-            onChange({ lat: e.latlng.lat, lng: e.latlng.lng });
-            map.flyTo(e.latlng, 15);
-        }).on("locationerror", function (e) {
-            alert("Could not access your location. Please ensure location permissions are granted.");
-        });
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                onChange({ lat: latitude, lng: longitude });
+                if (map) map.flyTo([latitude, longitude], 16);
+                setIsLocating(false);
+            },
+            (err) => {
+                setIsLocating(false);
+                if (err.code === err.PERMISSION_DENIED) {
+                    toast.error("Location permission denied. Enable it in browser settings.");
+                } else if (err.code === err.TIMEOUT) {
+                    toast.error("Location request timed out. Please try again.");
+                } else {
+                    toast.error("Could not get your location. Please try again.");
+                }
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
     };
 
     return (
@@ -93,10 +112,20 @@ export function MapPicker({ value, onChange, readonly = false }: MapPickerProps)
                         size="sm"
                         variant="secondary"
                         onClick={handleLocateMe}
+                        disabled={isLocating}
                         className="shadow-md bg-white text-black hover:bg-gray-100"
                     >
-                        <LocateFixed className="w-4 h-4 mr-2" />
-                        Locate Me
+                        {isLocating ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Locating…
+                            </>
+                        ) : (
+                            <>
+                                <LocateFixed className="w-4 h-4 mr-2" />
+                                Locate Me
+                            </>
+                        )}
                     </Button>
                 </div>
             )}

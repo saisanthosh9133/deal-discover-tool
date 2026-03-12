@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     ArrowLeft,
     Calendar,
@@ -16,6 +16,7 @@ import {
     Loader2,
     Heart,
     BarChart2,
+    Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,12 +51,19 @@ interface UserAd {
 export default function Profile() {
     const { user } = useAuth();
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const { ads, favorites } = useAds();
 
     const [myAds, setMyAds] = useState<UserAd[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"published" | "favorites">("published");
     const [selectedAdForAnalytics, setSelectedAdForAnalytics] = useState<Ad | null>(null);
+
+    // Set page title
+    useEffect(() => {
+        document.title = "My Profile — DealDiscover";
+        return () => { document.title = "DealDiscover"; };
+    }, []);
 
     // Filter global ads down to just the ones the user favorited
     const savedAds = ads.filter(ad => favorites.includes(ad.id));
@@ -136,7 +144,7 @@ export default function Profile() {
                             </div>
 
                             {/* Stats */}
-                            <div className="grid grid-cols-3 gap-4 mt-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
                                 <div className="bg-secondary/50 rounded-xl p-4 text-center">
                                     <div className="text-2xl font-bold text-foreground">{myAds.length}</div>
                                     <div className="text-xs text-muted-foreground mt-1">{t("profile.totalAds")}</div>
@@ -148,6 +156,10 @@ export default function Profile() {
                                 <div className="bg-secondary/50 rounded-xl p-4 text-center">
                                     <div className="text-2xl font-bold text-foreground">{totalViews}</div>
                                     <div className="text-xs text-muted-foreground mt-1">{t("profile.totalViews")}</div>
+                                </div>
+                                <div className="bg-secondary/50 rounded-xl p-4 text-center">
+                                    <div className="text-2xl font-bold text-red-500">{favorites.length}</div>
+                                    <div className="text-xs text-muted-foreground mt-1">Saved Favorites</div>
                                 </div>
                             </div>
                         </CardContent>
@@ -271,6 +283,14 @@ export default function Profile() {
                                                                     onClick={() => setSelectedAdForAnalytics(ad as unknown as Ad)}
                                                                 >
                                                                     <BarChart2 className="w-4 h-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-muted-foreground hover:text-blue-500"
+                                                                    onClick={() => navigate(`/ad/${ad.id || ad._id}/edit`)}
+                                                                >
+                                                                    <Pencil className="w-4 h-4" />
                                                                 </Button>
                                                                 <Button
                                                                     variant="ghost"

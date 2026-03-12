@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Upload, X, MapPin, Tag, Image as ImageIcon, Check } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Upload, X, MapPin, Tag, Image as ImageIcon, Check, Loader2 } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,26 +9,87 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/ui/Logo";
-import LocationSearch from "@/components/LocationSearch";
 import { MapPicker } from "@/components/MapPicker";
 import { popularKeywords } from "@/data/mockAds";
 import { useAds } from "@/context/AdsContext";
+import api from "@/context/AuthContext";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
 export default function PromoteAd() {
   const navigate = useNavigate();
-  const { addAd } = useAds();
+  const { id } = useParams<{ id?: string }>();
+  const isEditMode = Boolean(id);
+  const { addAd, updateAd } = useAds();
   const { t } = useTranslation();
   const [images, setImages] = useState<string[]>([]);
   const [keywords, setKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState("");
   const [city, setCity] = useState("");
   const [location, setLocation] = useState<{ lat: number, lng: number } | null>(null);
+  const [isGeocodingCity, setIsGeocodingCity] = useState(false);
+  const [isLoadingAd, setIsLoadingAd] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [discount, setDiscount] = useState("");
   const [businessName, setBusinessName] = useState("");
+
+  // Set page title
+  useEffect(() => {
+    document.title = isEditMode ? "Edit Deal — DealDiscover" : "Promote a Deal — DealDiscover";
+    return () => { document.title = "DealDiscover"; };
+  }, [isEditMode]);
+
+  // Pre-fill form when in edit mode
+  useEffect(() => {
+    if (!id) return;
+    const loadAd = async () => {
+      setIsLoadingAd(true);
+      try {
+        const response = await api.get(`/ads/${id}`);
+        if (response.data.success) {
+          const ad = response.data.ad;
+          setTitle(ad.title || "");
+          setDescription(ad.description || "");
+          setDiscount(ad.discount || "");
+          setBusinessName(ad.businessName || "");
+          setCity(ad.city || "");
+          setKeywords(ad.keywords || []);
+          setLocation(ad.location || null);
+          if (ad.imageUrl) setImages([ad.imageUrl]);
+        }
+      } catch {
+        toast.error("Failed to load deal for editing");
+        navigate("/profile");
+      } finally {
+        setIsLoadingAd(false);
+      }
+    };
+    loadAd();
+  }, [id]);
+
+  const handleLocationChange = async (loc: { lat: number; lng: number }) => {
+    setLocation(loc);
+    setIsGeocodingCity(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${loc.lat}&lon=${loc.lng}&format=json`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      const data = await res.json();
+      const detectedCity =
+        data.address?.city ||
+        data.address?.town ||
+        data.address?.village ||
+        data.address?.county ||
+        "";
+      if (detectedCity) setCity(detectedCity);
+    } catch {
+      // silently fail — user can type city manually
+    } finally {
+      setIsGeocodingCity(false);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -65,8 +126,8 @@ export default function PromoteAd() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !city || keywords.length === 0) {
-      toast.error(t("promote.errorRequired"));
+    if (!title || !city || !location || keywords.length === 0) {
+      toast.error(!location ? "Please pin your store location on the map" : t("promote.errorRequired"));
       return;
     }
 
@@ -76,7 +137,7 @@ export default function PromoteAd() {
       const validUntil = new Date();
       validUntil.setDate(validUntil.getDate() + 30);
 
-      await addAd({
+      const adPayload = {
         title,
         description: description || title,
         imageUrl: images[0] || "",
@@ -86,12 +147,16 @@ export default function PromoteAd() {
         discount: discount || "SPECIAL OFFER",
         businessName: businessName || "Local Business",
         validUntil: validUntil.toISOString().split("T")[0],
-      });
+      };
 
-      toast.success(t("promote.successTitle"), {
-        description: t("promote.successDesc"),
-      });
-      setTimeout(() => navigate("/"), 1500);
+      if (isEditMode && id) {
+        await updateAd(id, adPayload);
+        toast.success("Deal updated successfully!");
+      } else {
+        await addAd(adPayload);
+        toast.success(t("promote.successTitle"), { description: t("promote.successDesc") });
+      }
+      setTimeout(() => navigate("/profile"), 1500);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t("promote.errorRequired");
       toast.error(message);
@@ -117,6 +182,11 @@ export default function PromoteAd() {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-3xl">
+        {isLoadingAd ? (
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -124,17 +194,25 @@ export default function PromoteAd() {
         >
           <div className="text-center mb-8">
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-              {t("promote.title").split("<1>")[0]}
-              <span className="text-primary">
-                {t("promote.title").includes("<1>")
-                  ? t("promote.title").split("<1>")[1]?.split("</1>")[0]
-                  : "Offer"}
-              </span>
-              {t("promote.title").includes("</1>")
-                ? t("promote.title").split("</1>")[1]
-                : ""}
+              {isEditMode ? (
+                <>Edit Your <span className="text-primary">Deal</span></>
+              ) : (
+                <>
+                  {t("promote.title").split("<1>")[0]}
+                  <span className="text-primary">
+                    {t("promote.title").includes("<1>")
+                      ? t("promote.title").split("<1>")[1]?.split("</1>")[0]
+                      : "Offer"}
+                  </span>
+                  {t("promote.title").includes("</1>")
+                    ? t("promote.title").split("</1>")[1]
+                    : ""}
+                </>
+              )}
             </h1>
-            <p className="text-muted-foreground text-lg">{t("promote.subtitle")}</p>
+            <p className="text-muted-foreground text-lg">
+              {isEditMode ? "Update your deal details below" : t("promote.subtitle")}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -214,11 +292,43 @@ export default function PromoteAd() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <LocationSearch value={city} onChange={setCity} placeholder={t("home.locationPlaceholder")} label={t("promote.cityLabel")} />
+                {/* Map — primary required field */}
+                <div>
+                  <Label className="mb-2 flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    Store Location *
+                    {!location && (
+                      <span className="text-xs text-muted-foreground font-normal ml-1">
+                        — click the map to pin your store
+                      </span>
+                    )}
+                  </Label>
+                  <MapPicker value={location} onChange={handleLocationChange} />
+                </div>
 
-                <div className="pt-2 pb-2">
-                  <Label className="mb-2 block">Pinpoint Exact Location (Optional)</Label>
-                  <MapPicker value={location} onChange={setLocation} />
+                {/* City — auto-filled from pin, editable */}
+                <div>
+                  <Label htmlFor="city" className="flex items-center gap-2 mb-1.5">
+                    {t("promote.cityLabel")}
+                    {isGeocodingCity && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground font-normal">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Detecting city…
+                      </span>
+                    )}
+                    {!isGeocodingCity && city && (
+                      <span className="text-xs text-muted-foreground font-normal">
+                        (auto-detected — you can edit)
+                      </span>
+                    )}
+                  </Label>
+                  <Input
+                    id="city"
+                    placeholder="e.g., Bangalore"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    disabled={isGeocodingCity}
+                  />
                 </div>
 
                 <div>
@@ -271,10 +381,11 @@ export default function PromoteAd() {
 
             <Button type="submit" size="lg" className="w-full gap-2 shadow-elevated" disabled={isSubmitting}>
               <Check className="w-5 h-5" />
-              {t("promote.submitButton")}
+              {isEditMode ? "Save Changes" : t("promote.submitButton")}
             </Button>
           </form>
         </motion.div>
+        )}
       </main>
     </div>
   );
