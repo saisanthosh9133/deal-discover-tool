@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Calendar, Tag, Star, Heart, Clock } from "lucide-react";
+import { MapPin, Calendar, Tag, Star, Heart, Clock, Share2 } from "lucide-react";
 import { Ad } from "@/data/mockAds";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,6 +68,22 @@ export const AdCard = ({ ad, index = 0 }: AdCardProps) => {
     }
   };
 
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${window.location.origin}/ad/${ad.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: ad.title, text: ad.description, url });
+      } catch {
+        // user cancelled — no action needed
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -79,6 +95,7 @@ export const AdCard = ({ ad, index = 0 }: AdCardProps) => {
           <img
             src={ad.imageUrl}
             alt={ad.title}
+            loading="lazy"
             className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
           />
 
@@ -104,6 +121,16 @@ export const AdCard = ({ ad, index = 0 }: AdCardProps) => {
           </div>
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          {/* Share Button - revealed on hover */}
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            whileHover={{ scale: 1.1 }}
+            onClick={handleShare}
+            className="absolute bottom-3 right-3 z-10 p-2 rounded-full bg-black/30 backdrop-blur-sm border border-white/20 hover:bg-black/50 transition-colors opacity-0 group-hover:opacity-100"
+          >
+            <Share2 className="w-4 h-4 text-white" />
+          </motion.button>
         </Link>
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-2">

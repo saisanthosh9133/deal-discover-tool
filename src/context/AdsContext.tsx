@@ -24,6 +24,7 @@ interface AdsContextType {
   loading: boolean;
   error: string | null;
   addAd: (ad: Omit<Ad, "id">) => Promise<void>;
+  updateAd: (id: string, ad: Omit<Ad, "id">) => Promise<void>;
   rateAd: (id: string, value: number) => Promise<void>;
   toggleFavorite: (id: string) => void;
   refreshAds: () => Promise<void>;
@@ -89,8 +90,8 @@ export function AdsProvider({ children }: { children: ReactNode }) {
     fetchAds();
   }, [fetchAds]);
 
-  // Combine server ads with mock ads (mock ads show when server has none)
-  const ads = serverAds.length > 0 ? serverAds : mockAds;
+  // Only use server ads, do not inject mockAds when empty to prevent "fake" duplicates
+  const ads = serverAds;
 
   const addAd = async (adData: Omit<Ad, "id">) => {
     if (!isAuthenticated) {
@@ -120,6 +121,34 @@ export function AdsProvider({ children }: { children: ReactNode }) {
       // If API fails, add locally as fallback
       const errorMsg = axiosErr.response?.data?.message || axiosErr.message || "Failed to create ad";
       console.error("Create ad error:", errorMsg);
+      throw new Error(errorMsg);
+    }
+  };
+
+  const updateAd = async (id: string, adData: Omit<Ad, "id">) => {
+    if (!isAuthenticated) {
+      throw new Error("You must be logged in to update an ad");
+    }
+    try {
+      const response = await api.put(`/ads/${id}`, {
+        title: adData.title,
+        description: adData.description,
+        imageUrl: adData.imageUrl,
+        keywords: adData.keywords,
+        city: adData.city,
+        location: adData.location,
+        discount: adData.discount,
+        businessName: adData.businessName,
+        validUntil: adData.validUntil,
+      });
+      if (response.data.success) {
+        await fetchAds();
+      } else {
+        throw new Error(response.data.message || "Failed to update ad");
+      }
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = axiosErr.response?.data?.message || axiosErr.message || "Failed to update ad";
       throw new Error(errorMsg);
     }
   };
@@ -154,7 +183,7 @@ export function AdsProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AdsContext.Provider value={{ ads, favorites, loading, error, addAd, rateAd, toggleFavorite, refreshAds: fetchAds }}>
+    <AdsContext.Provider value={{ ads, favorites, loading, error, addAd, updateAd, rateAd, toggleFavorite, refreshAds: fetchAds }}>
       {children}
     </AdsContext.Provider>
   );

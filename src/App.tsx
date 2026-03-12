@@ -31,6 +31,14 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/ad/:id" element={<AdDetail />} />
                 <Route
+                  path="/ad/:id/edit"
+                  element={
+                    <ProtectedRoute>
+                      <PromoteAd />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/promote"
                   element={
                     <ProtectedRoute>

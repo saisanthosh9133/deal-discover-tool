@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: ["democratic-handy-dover-nodes.trycloudflare.com"],
     proxy: {
       // Forward all /api requests to the Express backend
       "/api": {

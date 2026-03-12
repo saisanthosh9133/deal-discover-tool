@@ -1,12 +1,19 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { MapPin, Search, Filter, X, Megaphone, Sparkles, TrendingUp, Users } from "lucide-react";
+import { MapPin, Search, Filter, X, Megaphone, Sparkles, TrendingUp, Users, History, ArrowUpDown, LocateFixed, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Logo } from "@/components/ui/Logo";
 import NavBar from "@/components/NavBar";
 import LocationSearch from "@/components/LocationSearch";
@@ -16,6 +23,17 @@ import { popularKeywords } from "@/data/mockAds";
 import { useAds } from "@/context/AdsContext";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+
+type SortBy = "newest" | "highest_rated" | "expiring_soon" | "most_viewed";
+
+const RECENT_SEARCHES_KEY = "dd_recent_searches";
+const MAX_RECENT = 5;
+
+interface RecentSearch {
+  city: string;
+  keywords: string[];
+}
 
 export default function Index() {
   const { ads, loading } = useAds();
@@ -25,6 +43,96 @@ export default function Index() {
   const [keywordInput, setKeywordInput] = useState("");
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [sortBy, setSortBy] = useState<SortBy>("newest");
+  const [isLocatingNearMe, setIsLocatingNearMe] = useState(false);
+
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const saveSearch = (searchCity: string, searchKeywords: string[]) => {
+    if (!searchCity && searchKeywords.length === 0) return;
+    const newEntry: RecentSearch = { city: searchCity, keywords: [...searchKeywords] };
+    setRecentSearches((prev) => {
+      const deduped = prev.filter(
+        (s) =>
+          !(
+            s.city === newEntry.city &&
+            JSON.stringify(s.keywords) === JSON.stringify(newEntry.keywords)
+          )
+      );
+      const updated = [newEntry, ...deduped].slice(0, MAX_RECENT);
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const applyRecentSearch = (search: RecentSearch) => {
+    setCity(search.city);
+    setSelectedKeywords(search.keywords);
+    setHasSearched(true);
+  };
+
+  const clearRecentSearches = () => {
+    localStorage.removeItem(RECENT_SEARCHES_KEY);
+    setRecentSearches([]);
+  };
+
+  // Set page title
+  useEffect(() => {
+    document.title = "DealDiscover — Discover Amazing Offers Near You";
+    return () => { document.title = "DealDiscover"; };
+  }, []);
+
+  const handleNearMe = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported in your browser");
+      return;
+    }
+    setIsLocatingNearMe(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          const data = await res.json();
+          const detectedCity =
+            data.address?.city ||
+            data.address?.town ||
+            data.address?.village ||
+            data.address?.county ||
+            "";
+          if (detectedCity) {
+            setCity(detectedCity);
+            setHasSearched(true);
+            saveSearch(detectedCity, selectedKeywords);
+          } else {
+            toast.error("Could not detect your city. Please select manually.");
+          }
+        } catch {
+          toast.error("Could not detect your location.");
+        } finally {
+          setIsLocatingNearMe(false);
+        }
+      },
+      (err) => {
+        setIsLocatingNearMe(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          toast.error("Location permission denied. Enable it in browser settings.");
+        } else {
+          toast.error("Could not get your location. Please try again.");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const addKeyword = (keyword: string) => {
     const trimmed = keyword.trim().toLowerCase();
@@ -41,7 +149,7 @@ export default function Index() {
   const filteredAds = useMemo(() => {
     if (!hasSearched) return [];
 
-    return ads.filter((ad) => {
+    const filtered = ads.filter((ad) => {
       const cityMatch = !city || ad.city.toLowerCase() === city.toLowerCase();
       const keywordMatch =
         selectedKeywords.length === 0 ||
@@ -50,16 +158,41 @@ export default function Index() {
         );
       return cityMatch && keywordMatch;
     });
-  }, [city, selectedKeywords, hasSearched, ads]);
+
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "highest_rated":
+          return (b.avgRating || 0) - (a.avgRating || 0);
+        case "expiring_soon": {
+          const aDate = a.validUntil ? new Date(a.validUntil).getTime() : Infinity;
+          const bDate = b.validUntil ? new Date(b.validUntil).getTime() : Infinity;
+          return aDate - bDate;
+        }
+        case "most_viewed":
+          return (b.views || 0) - (a.views || 0);
+        case "newest":
+        default:
+          return b.id.localeCompare(a.id);
+      }
+    });
+  }, [city, selectedKeywords, hasSearched, ads, sortBy]);
 
   const handleSearch = () => {
     setHasSearched(true);
+    saveSearch(city, selectedKeywords);
   };
 
   const clearFilters = () => {
     setCity("");
     setSelectedKeywords([]);
     setHasSearched(false);
+  };
+
+  const sortLabel: Record<SortBy, string> = {
+    newest: "Newest First",
+    highest_rated: "Highest Rated",
+    expiring_soon: "Expiring Soon",
+    most_viewed: "Most Viewed",
   };
 
   return (
@@ -106,7 +239,7 @@ export default function Index() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <Card className="shadow-card mb-8 max-w-3xl mx-auto">
+            <Card className="shadow-card mb-4 max-w-3xl mx-auto">
               <CardContent className="p-6">
                 <div className="grid md:grid-cols-2 gap-4 mb-4">
                   <LocationSearch
@@ -178,6 +311,20 @@ export default function Index() {
                     <Search className="w-5 h-5" />
                     {t("home.searchButton")}
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleNearMe}
+                    disabled={isLocatingNearMe}
+                    className="gap-2 shrink-0"
+                  >
+                    {isLocatingNearMe ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <LocateFixed className="w-4 h-4" />
+                    )}
+                    <span className="hidden sm:inline">Near Me</span>
+                  </Button>
                   {hasSearched && (
                     <Button variant="outline" onClick={clearFilters}>
                       {t("home.clearButton")}
@@ -186,6 +333,49 @@ export default function Index() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Recent Searches */}
+            {!hasSearched && recentSearches.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="max-w-3xl mx-auto mb-6 px-1"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <History className="w-3.5 h-3.5" />
+                    Recent searches
+                  </span>
+                  <button
+                    onClick={clearRecentSearches}
+                    className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    Clear all
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {recentSearches.map((search, index) => {
+                    const label = [
+                      search.city,
+                      ...search.keywords,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ");
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => applyRecentSearch(search)}
+                        className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border border-border bg-card hover:bg-secondary hover:border-primary/40 transition-colors text-foreground"
+                      >
+                        <History className="w-3 h-3 text-muted-foreground shrink-0" />
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Results */}
@@ -196,18 +386,36 @@ export default function Index() {
               transition={{ duration: 0.3 }}
               className="max-w-6xl mx-auto"
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
                 <h2 className="font-display text-xl font-semibold text-foreground">
                   {t("home.offersFound", { count: filteredAds.length })}
+                  {(city || selectedKeywords.length > 0) && (
+                    <span className="ml-2 inline-flex items-center gap-1.5">
+                      {city && (
+                        <Badge variant="outline" className="gap-1 font-normal text-sm">
+                          <MapPin className="w-3 h-3" />
+                          {city}
+                        </Badge>
+                      )}
+                    </span>
+                  )}
                 </h2>
-                {(city || selectedKeywords.length > 0) && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {city && (
-                      <Badge variant="outline" className="gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {city}
-                      </Badge>
-                    )}
+
+                {/* Sort Dropdown */}
+                {filteredAds.length > 1 && (
+                  <div className="flex items-center gap-2">
+                    <ArrowUpDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+                      <SelectTrigger className="w-44 h-9 text-sm">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="newest">Newest First</SelectItem>
+                        <SelectItem value="highest_rated">Highest Rated</SelectItem>
+                        <SelectItem value="expiring_soon">Expiring Soon</SelectItem>
+                        <SelectItem value="most_viewed">Most Viewed</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
               </div>

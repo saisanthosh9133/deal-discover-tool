@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import NavBar from "@/components/NavBar";
 import api from "@/context/AuthContext";
 import { Ad, mockAds } from "@/data/mockAds";
-import { MapPin, Calendar, Tag, ArrowLeft, Star, Store, Loader2, Heart, Clock } from "lucide-react";
+import { MapPin, Calendar, Tag, ArrowLeft, Star, Store, Loader2, Heart, Clock, Eye, Share2, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ export default function AdDetail() {
     const [loading, setLoading] = useState(true);
     const [hoverRating, setHoverRating] = useState(0);
     const [isRating, setIsRating] = useState(false);
+    const [userRating, setUserRating] = useState<number>(0);
 
     useEffect(() => {
         const fetchAdDetails = async () => {
@@ -46,6 +47,7 @@ export default function AdDetail() {
                         validUntil: sAd.validUntil ? new Date(sAd.validUntil).toISOString().split("T")[0] : "",
                         avgRating: sAd.avgRating || 0,
                         totalRatings: sAd.totalRatings || 0,
+                        views: sAd.views || 0,
                         location: sAd.location || undefined,
                     });
                     setLoading(false);
@@ -68,22 +70,59 @@ export default function AdDetail() {
         }
     }, [id, ads]);
 
+    const handleShare = async () => {
+        const url = window.location.href;
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: ad?.title, text: ad?.description, url });
+            } catch {
+                // user cancelled — no action needed
+            }
+        } else {
+            await navigator.clipboard.writeText(url);
+            toast.success("Link copied to clipboard!");
+        }
+    };
+
+    // Dynamic page title
+    useEffect(() => {
+        if (ad) {
+            document.title = `${ad.title} — DealDiscover`;
+        }
+        return () => { document.title = "DealDiscover"; };
+    }, [ad]);
+
+    // Load user's own rating for this ad from localStorage
+    useEffect(() => {
+        if (ad?.id) {
+            const stored = localStorage.getItem(`dd_rating_${ad.id}`);
+            if (stored) setUserRating(parseInt(stored, 10));
+            else setUserRating(0);
+        }
+    }, [ad?.id]);
+
     const handleRate = async (value: number) => {
         if (!isAuthenticated) {
             toast.error(t("auth.loginRequired", "Please login to rate ads"));
+            navigate("/login");
             return;
         }
         if (!ad) return;
+        if (userRating > 0) {
+            toast.info("You have already rated this deal.");
+            return;
+        }
 
         try {
             setIsRating(true);
             await rateAd(ad.id, value);
+            setUserRating(value);
+            localStorage.setItem(`dd_rating_${ad.id}`, String(value));
             toast.success(t("adCard.rateSuccess", "Thank you for rating!"));
 
-            // Optimitically update UI if backend succeeds
+            // Optimistically update UI
             setAd(prev => {
                 if (!prev) return prev;
-                // Super simple approximation for immediate feedback
                 const newTotal = (prev.totalRatings || 0) + 1;
                 const newAvg = ((prev.avgRating || 0) * (prev.totalRatings || 0) + value) / newTotal;
                 return {
@@ -93,7 +132,15 @@ export default function AdDetail() {
                 };
             });
         } catch (error: any) {
-            toast.error(error.message || t("adCard.rateError", "Failed to submit rating"));
+            const msg: string = error.message || "";
+            if (msg.toLowerCase().includes("already")) {
+                // Backend says already rated — persist locally so UI reflects it
+                setUserRating(value);
+                localStorage.setItem(`dd_rating_${ad.id}`, String(value));
+                toast.info("You have already rated this deal.");
+            } else {
+                toast.error(msg || t("adCard.rateError", "Failed to submit rating"));
+            }
         } finally {
             setIsRating(false);
         }
@@ -138,14 +185,21 @@ export default function AdDetail() {
             <NavBar />
 
             <main className="max-w-5xl mx-auto px-4 py-8 md:py-12 flex flex-col gap-8 animate-in fade-in duration-500">
-                <Button
-                    variant="ghost"
-                    className="w-fit -ml-4 text-muted-foreground hover:text-foreground"
-                    onClick={() => navigate(-1)}
-                >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    {t("adDetail.back", "Back")}
-                </Button>
+                <div className="flex items-center justify-between">
+                    <Button
+                        variant="ghost"
+                        className="w-fit -ml-4 text-muted-foreground hover:text-foreground"
+                        onClick={() => navigate(-1)}
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        {t("adDetail.back", "Back")}
+                    </Button>
+
+                    <Button variant="outline" size="sm" className="gap-2" onClick={handleShare}>
+                        <Share2 className="w-4 h-4" />
+                        Share
+                    </Button>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
                     {/* Image Section */}
@@ -153,6 +207,7 @@ export default function AdDetail() {
                         <img
                             src={ad.imageUrl}
                             alt={ad.title}
+                            loading="lazy"
                             className="w-full h-full object-cover"
                         />
 
@@ -193,10 +248,20 @@ export default function AdDetail() {
                                 <Store className="w-3.5 h-3.5 mr-1" />
                                 {ad.businessName}
                             </Badge>
-                            <div className="flex items-center gap-1.5 text-muted-foreground text-sm bg-background/50 px-2 py-1 rounded-md border border-border/50">
+                            <a
+                                href={
+                                    ad.location
+                                        ? `https://maps.google.com/?q=${ad.location.lat},${ad.location.lng}`
+                                        : `https://maps.google.com/?q=${encodeURIComponent(`${ad.businessName} ${ad.city}`)}`
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 text-muted-foreground text-sm bg-background/50 px-2 py-1 rounded-md border border-border/50 hover:border-primary/50 hover:text-primary transition-colors"
+                            >
                                 <MapPin className="w-3.5 h-3.5 text-primary" />
                                 {ad.city}
-                            </div>
+                                <ExternalLink className="w-3 h-3 opacity-60" />
+                            </a>
                         </div>
 
                         <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4 leading-tight">
@@ -215,32 +280,66 @@ export default function AdDetail() {
 
                             <div className="w-px h-6 bg-border mx-2"></div>
 
+                            {/* View Count */}
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <Eye className="w-4 h-4" />
+                                <span>{(ad.views || 0).toLocaleString()} views</span>
+                            </div>
+
+                            <div className="w-px h-6 bg-border mx-2"></div>
+
                             {/* Interactive Rating UI */}
                             <div className="flex items-center gap-1">
-                                <span className="text-sm text-muted-foreground mr-1 hidden sm:inline-block">
-                                    {t("adDetail.rateThisAd", "Rate:")}
-                                </span>
-                                {[1, 2, 3, 4, 5].map((star) => (
+                                {!isAuthenticated ? (
                                     <button
-                                        key={star}
                                         type="button"
-                                        disabled={isRating}
-                                        onClick={() => handleRate(star)}
-                                        onMouseEnter={() => setHoverRating(star)}
-                                        onMouseLeave={() => setHoverRating(0)}
-                                        className="focus:outline-none disabled:opacity-50 transition-transform hover:scale-125 hover:z-10"
-                                        title={t("adDetail.rate", "Rate {{star}} stars", { star })}
+                                        onClick={() => navigate("/login")}
+                                        className="text-sm text-primary hover:underline font-medium"
                                     >
-                                        <Star
-                                            className={cn(
-                                                "w-5 h-5 transition-colors cursor-pointer",
-                                                (hoverRating || 0) >= star || (!hoverRating && avgRating >= star)
-                                                    ? "fill-yellow-400 text-yellow-400"
-                                                    : "fill-transparent text-muted-foreground hover:text-yellow-400"
-                                            )}
-                                        />
+                                        Login to rate
                                     </button>
-                                ))}
+                                ) : userRating > 0 ? (
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-sm text-muted-foreground mr-1 hidden sm:inline-block">Your rating:</span>
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star
+                                                key={star}
+                                                className={cn(
+                                                    "w-5 h-5",
+                                                    userRating >= star ? "fill-yellow-400 text-yellow-400" : "fill-transparent text-muted-foreground"
+                                                )}
+                                            />
+                                        ))}
+                                        <span className="text-xs text-green-600 dark:text-green-400 font-medium ml-1">Rated!</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <span className="text-sm text-muted-foreground mr-1 hidden sm:inline-block">
+                                            {t("adDetail.rateThisAd", "Rate:")}
+                                        </span>
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                                key={star}
+                                                type="button"
+                                                disabled={isRating}
+                                                onClick={() => handleRate(star)}
+                                                onMouseEnter={() => setHoverRating(star)}
+                                                onMouseLeave={() => setHoverRating(0)}
+                                                className="focus:outline-none disabled:opacity-50 transition-transform hover:scale-125 hover:z-10"
+                                                title={t("adDetail.rate", "Rate {{star}} stars", { star })}
+                                            >
+                                                <Star
+                                                    className={cn(
+                                                        "w-5 h-5 transition-colors cursor-pointer",
+                                                        hoverRating >= star
+                                                            ? "fill-yellow-400 text-yellow-400"
+                                                            : "fill-transparent text-muted-foreground hover:text-yellow-400"
+                                                    )}
+                                                />
+                                            </button>
+                                        ))}
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -281,10 +380,21 @@ export default function AdDetail() {
                         {/* Location Map View */}
                         {ad.location && (
                             <div className="mt-8 border-t border-border/50 pt-8">
-                                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                    <MapPin className="w-5 h-5 text-primary" />
-                                    Exact Location
-                                </h3>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xl font-bold flex items-center gap-2">
+                                        <MapPin className="w-5 h-5 text-primary" />
+                                        Exact Location
+                                    </h3>
+                                    <a
+                                        href={`https://maps.google.com/?q=${ad.location.lat},${ad.location.lng}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                        Open in Maps
+                                    </a>
+                                </div>
                                 <div className="h-[250px] w-full rounded-xl overflow-hidden shadow-sm">
                                     <MapPicker value={ad.location} onChange={() => { }} readonly={true} />
                                 </div>
