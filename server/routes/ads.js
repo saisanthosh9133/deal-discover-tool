@@ -7,6 +7,7 @@ import {
     updateAd,
     deleteAd,
     getAdCities,
+    rateAd,
 } from "../controllers/adController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 
@@ -21,6 +22,7 @@ router.post("/", authMiddleware, createAd);        // Create ad
 router.get("/user/mine", authMiddleware, getMyAds); // My ads
 router.put("/:id", authMiddleware, updateAd);       // Update ad
 router.delete("/:id", authMiddleware, deleteAd);    // Soft delete ad
+router.post("/:id/rate", authMiddleware, rateAd);   // Rate ad
 
 // Dynamic :id route LAST — catches everything not matched above
 router.get("/:id", getAdById);          // Single ad with view tracking

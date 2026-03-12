@@ -236,3 +236,51 @@ export const getAdCities = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to fetch cities" });
     }
 };
+
+// @desc    Rate an ad
+// @route   POST /api/ads/:id/rate
+// @access  Private
+export const rateAd = async (req, res) => {
+    try {
+        const { value } = req.body;
+
+        if (!value || value < 1 || value > 5) {
+            return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
+        }
+
+        const ad = await Ad.findById(req.params.id);
+
+        if (!ad) {
+            return res.status(404).json({ success: false, message: "Ad not found" });
+        }
+
+        // Check if user already rated
+        const existingRatingIndex = ad.ratings.findIndex(
+            (r) => r.userId.toString() === req.user.id
+        );
+
+        if (existingRatingIndex >= 0) {
+            // Update existing rating
+            ad.ratings[existingRatingIndex].value = value;
+            ad.ratings[existingRatingIndex].createdAt = new Date();
+        } else {
+            // Add new rating
+            ad.ratings.push({
+                userId: req.user.id,
+                value,
+                createdAt: new Date(),
+            });
+        }
+
+        await ad.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Rating submitted",
+            ad: ad.toJSON(),
+        });
+    } catch (error) {
+        console.error("Rate ad error:", error);
+        res.status(500).json({ success: false, message: "Failed to submit rating" });
+    }
+};

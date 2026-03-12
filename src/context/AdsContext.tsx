@@ -14,6 +14,8 @@ interface ServerAd {
   discount?: string;
   businessName: string;
   validUntil?: string;
+  avgRating?: number;
+  totalRatings?: number;
 }
 
 interface AdsContextType {
@@ -21,6 +23,7 @@ interface AdsContextType {
   loading: boolean;
   error: string | null;
   addAd: (ad: Omit<Ad, "id">) => Promise<void>;
+  rateAd: (id: string, value: number) => Promise<void>;
   refreshAds: () => Promise<void>;
 }
 
@@ -50,6 +53,8 @@ export function AdsProvider({ children }: { children: ReactNode }) {
           discount: ad.discount || "SPECIAL OFFER",
           businessName: ad.businessName,
           validUntil: ad.validUntil ? new Date(ad.validUntil).toISOString().split("T")[0] : "",
+          avgRating: ad.avgRating || 0,
+          totalRatings: ad.totalRatings || 0,
         }));
         setServerAds(mapped);
       } else {
@@ -104,8 +109,28 @@ export function AdsProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const rateAd = async (id: string, value: number) => {
+    if (!isAuthenticated) {
+      throw new Error("You must be logged in to rate an ad");
+    }
+    try {
+      const response = await api.post(`/ads/${id}/rate`, { value });
+      if (response.data.success) {
+        // Re-fetch to get the latest ratings
+        await fetchAds();
+      } else {
+        throw new Error(response.data.message || "Failed to submit rating");
+      }
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = axiosErr.response?.data?.message || axiosErr.message || "Failed to submit rating";
+      console.error("Rate ad error:", errorMsg);
+      throw new Error(errorMsg);
+    }
+  };
+
   return (
-    <AdsContext.Provider value={{ ads, loading, error, addAd, refreshAds: fetchAds }}>
+    <AdsContext.Provider value={{ ads, loading, error, addAd, rateAd, refreshAds: fetchAds }}>
       {children}
     </AdsContext.Provider>
   );

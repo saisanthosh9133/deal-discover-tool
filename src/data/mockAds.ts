@@ -8,7 +8,10 @@ export interface Ad {
   discount: string;
   businessName: string;
   validUntil: string;
+  avgRating?: number;
+  totalRatings?: number;
 }
+
 
 export const mockAds: Ad[] = [
   {
