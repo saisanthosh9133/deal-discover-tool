@@ -89,8 +89,8 @@ export function AdsProvider({ children }: { children: ReactNode }) {
     fetchAds();
   }, [fetchAds]);
 
-  // Combine server ads with mock ads (mock ads show when server has none)
-  const ads = serverAds.length > 0 ? serverAds : mockAds;
+  // Only use server ads, do not inject mockAds when empty to prevent "fake" duplicates
+  const ads = serverAds;
 
   const addAd = async (adData: Omit<Ad, "id">) => {
     if (!isAuthenticated) {
