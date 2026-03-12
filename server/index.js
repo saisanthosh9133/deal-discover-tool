@@ -44,9 +44,18 @@ app.use("/api/auth", authLimiter);
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:8080",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like curl / Postman)
+    if (!origin) return callback(null, true);
+    // Allow any localhost port for local development
+    if (/^http:\/\/localhost:\d+$/.test(origin) || origin === process.env.CLIENT_URL) {
+      return callback(null, true);
+    }
+    callback(new Error("Not allowed by CORS"));
+  },
   credentials: true,
 }));
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 

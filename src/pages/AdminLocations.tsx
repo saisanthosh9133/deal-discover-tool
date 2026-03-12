@@ -16,6 +16,7 @@ import { useAuth } from "@/context/AuthContext";
 import api from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Plus, Edit2, Trash2, ToggleRight, ToggleLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Location {
   _id: string;
@@ -33,6 +34,7 @@ interface Location {
 export default function AdminLocations() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -47,7 +49,6 @@ export default function AdminLocations() {
     tier: "Tier1",
   });
 
-  // Check if user is authorized (optional: add role check)
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -64,7 +65,7 @@ export default function AdminLocations() {
         setLocations(response.data.locations);
       }
     } catch (error) {
-      toast.error("Failed to load locations");
+      toast.error(t("admin.createFailed"));
       console.error(error);
     } finally {
       setLoading(false);
@@ -75,13 +76,12 @@ export default function AdminLocations() {
     e.preventDefault();
 
     if (!formData.name || !formData.displayName || !formData.state) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("admin.fillRequired"));
       return;
     }
 
     try {
       if (editingId) {
-        // Update location
         const response = await api.put(`/locations/${editingId}`, {
           displayName: formData.displayName,
           state: formData.state,
@@ -92,11 +92,10 @@ export default function AdminLocations() {
         });
 
         if (response.data.success) {
-          toast.success("Location updated successfully");
+          toast.success(t("admin.updateSuccess"));
           setLocations(locations.map((l) => (l._id === editingId ? response.data.location : l)));
         }
       } else {
-        // Create new location
         const response = await api.post("/locations", {
           name: formData.name.toLowerCase().trim(),
           displayName: formData.displayName,
@@ -108,7 +107,7 @@ export default function AdminLocations() {
         });
 
         if (response.data.success) {
-          toast.success("Location created successfully");
+          toast.success(t("admin.createSuccess"));
           setLocations([...locations, response.data.location]);
         }
       }
@@ -136,18 +135,18 @@ export default function AdminLocations() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this location?")) {
+    if (!window.confirm(t("admin.confirmDelete"))) {
       return;
     }
 
     try {
       const response = await api.delete(`/locations/${id}`);
       if (response.data.success) {
-        toast.success("Location deleted");
+        toast.success(t("admin.deleteSuccess"));
         setLocations(locations.filter((l) => l._id !== id));
       }
     } catch (error) {
-      toast.error("Failed to delete location");
+      toast.error(t("admin.deleteFailed"));
     }
   };
 
@@ -156,12 +155,10 @@ export default function AdminLocations() {
       const response = await api.patch(`/locations/${id}/toggle`);
       if (response.data.success) {
         toast.success(response.data.message);
-        setLocations(
-          locations.map((l) => (l._id === id ? response.data.location : l))
-        );
+        setLocations(locations.map((l) => (l._id === id ? response.data.location : l)));
       }
     } catch (error) {
-      toast.error("Failed to toggle location");
+      toast.error(t("admin.toggleFailed"));
     }
   };
 
@@ -181,7 +178,7 @@ export default function AdminLocations() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">Loading locations...</p>
+        <p className="text-gray-600">{t("admin.loading")}</p>
       </div>
     );
   }
@@ -190,8 +187,8 @@ export default function AdminLocations() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Manage Locations</h1>
-          <p className="text-gray-600">Add, edit, and manage location data</p>
+          <h1 className="text-3xl font-bold mb-2">{t("admin.title")}</h1>
+          <p className="text-gray-600">{t("admin.subtitle")}</p>
         </div>
 
         {/* Form Card */}
@@ -199,7 +196,7 @@ export default function AdminLocations() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>
-                {editingId ? "Edit Location" : "Add New Location"}
+                {editingId ? t("admin.editLocation") : t("admin.addNewLocation")}
               </CardTitle>
               {showForm && (
                 <Button
@@ -209,7 +206,7 @@ export default function AdminLocations() {
                     resetForm();
                   }}
                 >
-                  Cancel
+                  {t("admin.cancel")}
                 </Button>
               )}
             </div>
@@ -220,53 +217,21 @@ export default function AdminLocations() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">Location Name (Unique) *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      disabled={!!editingId}
-                      placeholder="e.g., mumbai"
-                      className="mt-1"
-                    />
+                    <Label htmlFor="name">{t("admin.locationName")}</Label>
+                    <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} disabled={!!editingId} placeholder="e.g., mumbai" className="mt-1" />
                   </div>
                   <div>
-                    <Label htmlFor="displayName">Display Name *</Label>
-                    <Input
-                      id="displayName"
-                      value={formData.displayName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, displayName: e.target.value })
-                      }
-                      placeholder="e.g., Mumbai"
-                      className="mt-1"
-                    />
+                    <Label htmlFor="displayName">{t("admin.displayName")}</Label>
+                    <Input id="displayName" value={formData.displayName} onChange={(e) => setFormData({ ...formData, displayName: e.target.value })} placeholder="e.g., Mumbai" className="mt-1" />
                   </div>
                   <div>
-                    <Label htmlFor="state">State *</Label>
-                    <Input
-                      id="state"
-                      value={formData.state}
-                      onChange={(e) =>
-                        setFormData({ ...formData, state: e.target.value })
-                      }
-                      placeholder="e.g., Maharashtra"
-                      className="mt-1"
-                    />
+                    <Label htmlFor="state">{t("admin.state")}</Label>
+                    <Input id="state" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} placeholder="e.g., Maharashtra" className="mt-1" />
                   </div>
                   <div>
-                    <Label htmlFor="tier">Tier</Label>
-                    <Select
-                      value={formData.tier}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, tier: value })
-                      }
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
+                    <Label htmlFor="tier">{t("admin.tier")}</Label>
+                    <Select value={formData.tier} onValueChange={(value) => setFormData({ ...formData, tier: value })}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Metro">Metro</SelectItem>
                         <SelectItem value="Tier1">Tier 1</SelectItem>
@@ -275,16 +240,9 @@ export default function AdminLocations() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="region">Region</Label>
-                    <Select
-                      value={formData.region}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, region: value })
-                      }
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
+                    <Label htmlFor="region">{t("admin.region")}</Label>
+                    <Select value={formData.region} onValueChange={(value) => setFormData({ ...formData, region: value })}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="North">North</SelectItem>
                         <SelectItem value="South">South</SelectItem>
@@ -296,36 +254,16 @@ export default function AdminLocations() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="latitude">Latitude</Label>
-                    <Input
-                      id="latitude"
-                      type="number"
-                      step="0.0001"
-                      value={formData.latitude}
-                      onChange={(e) =>
-                        setFormData({ ...formData, latitude: e.target.value })
-                      }
-                      placeholder="e.g., 19.0760"
-                      className="mt-1"
-                    />
+                    <Label htmlFor="latitude">{t("admin.latitude")}</Label>
+                    <Input id="latitude" type="number" step="0.0001" value={formData.latitude} onChange={(e) => setFormData({ ...formData, latitude: e.target.value })} placeholder="e.g., 19.0760" className="mt-1" />
                   </div>
                   <div>
-                    <Label htmlFor="longitude">Longitude</Label>
-                    <Input
-                      id="longitude"
-                      type="number"
-                      step="0.0001"
-                      value={formData.longitude}
-                      onChange={(e) =>
-                        setFormData({ ...formData, longitude: e.target.value })
-                      }
-                      placeholder="e.g., 72.8777"
-                      className="mt-1"
-                    />
+                    <Label htmlFor="longitude">{t("admin.longitude")}</Label>
+                    <Input id="longitude" type="number" step="0.0001" value={formData.longitude} onChange={(e) => setFormData({ ...formData, longitude: e.target.value })} placeholder="e.g., 72.8777" className="mt-1" />
                   </div>
                 </div>
                 <Button type="submit" className="w-full">
-                  {editingId ? "Update Location" : "Add Location"}
+                  {editingId ? t("admin.updateLocation") : t("admin.addLocation")}
                 </Button>
               </form>
             </CardContent>
@@ -335,7 +273,7 @@ export default function AdminLocations() {
             <CardContent>
               <Button onClick={() => setShowForm(true)} className="gap-2">
                 <Plus className="w-4 h-4" />
-                Add New Location
+                {t("admin.addNewLocation")}
               </Button>
             </CardContent>
           )}
@@ -344,50 +282,31 @@ export default function AdminLocations() {
         {/* Locations Table */}
         <Card>
           <CardHeader>
-            <CardTitle>All Locations ({locations.length})</CardTitle>
+            <CardTitle>{t("admin.allLocations", { count: locations.length })}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-semibold">
-                      Location
-                    </th>
-                    <th className="text-left py-3 px-4 font-semibold">State</th>
-                    <th className="text-left py-3 px-4 font-semibold">Tier</th>
-                    <th className="text-left py-3 px-4 font-semibold">
-                      Region
-                    </th>
-                    <th className="text-left py-3 px-4 font-semibold">
-                      Popularity
-                    </th>
-                    <th className="text-left py-3 px-4 font-semibold">
-                      Status
-                    </th>
-                    <th className="text-left py-3 px-4 font-semibold">
-                      Actions
-                    </th>
+                    <th className="text-left py-3 px-4 font-semibold">{t("admin.colLocation")}</th>
+                    <th className="text-left py-3 px-4 font-semibold">{t("admin.colState")}</th>
+                    <th className="text-left py-3 px-4 font-semibold">{t("admin.colTier")}</th>
+                    <th className="text-left py-3 px-4 font-semibold">{t("admin.colRegion")}</th>
+                    <th className="text-left py-3 px-4 font-semibold">{t("admin.colPopularity")}</th>
+                    <th className="text-left py-3 px-4 font-semibold">{t("admin.colStatus")}</th>
+                    <th className="text-left py-3 px-4 font-semibold">{t("admin.colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {locations.map((location) => (
-                    <tr
-                      key={location._id}
-                      className="border-b hover:bg-gray-50 transition-colors"
-                    >
+                    <tr key={location._id} className="border-b hover:bg-gray-50 transition-colors">
                       <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium">{location.displayName}</p>
-                        </div>
+                        <p className="font-medium">{location.displayName}</p>
                       </td>
                       <td className="py-3 px-4">{location.state}</td>
                       <td className="py-3 px-4">
-                        <Badge
-                          variant={
-                            location.tier === "Metro" ? "default" : "secondary"
-                          }
-                        >
+                        <Badge variant={location.tier === "Metro" ? "default" : "secondary"}>
                           {location.tier}
                         </Badge>
                       </td>
@@ -395,36 +314,18 @@ export default function AdminLocations() {
                       <td className="py-3 px-4">{location.popularity}</td>
                       <td className="py-3 px-4">
                         <Badge variant={location.isActive ? "default" : "destructive"}>
-                          {location.isActive ? "Active" : "Inactive"}
+                          {location.isActive ? t("admin.active") : t("admin.inactive")}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => handleToggle(location._id)}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
-                            title={
-                              location.isActive ? "Deactivate" : "Activate"
-                            }
-                          >
-                            {location.isActive ? (
-                              <ToggleRight className="w-4 h-4 text-green-600" />
-                            ) : (
-                              <ToggleLeft className="w-4 h-4 text-gray-400" />
-                            )}
+                          <button onClick={() => handleToggle(location._id)} className="p-1 hover:bg-gray-200 rounded transition-colors" title={location.isActive ? "Deactivate" : "Activate"}>
+                            {location.isActive ? <ToggleRight className="w-4 h-4 text-green-600" /> : <ToggleLeft className="w-4 h-4 text-gray-400" />}
                           </button>
-                          <button
-                            onClick={() => handleEdit(location)}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
-                            title="Edit"
-                          >
+                          <button onClick={() => handleEdit(location)} className="p-1 hover:bg-gray-200 rounded transition-colors" title="Edit">
                             <Edit2 className="w-4 h-4 text-blue-600" />
                           </button>
-                          <button
-                            onClick={() => handleDelete(location._id)}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
-                            title="Delete"
-                          >
+                          <button onClick={() => handleDelete(location._id)} className="p-1 hover:bg-gray-200 rounded transition-colors" title="Delete">
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </button>
                         </div>

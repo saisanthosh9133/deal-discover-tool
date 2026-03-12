@@ -3,6 +3,7 @@ import { MapPin, Calendar, Tag } from "lucide-react";
 import { Ad } from "@/data/mockAds";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 interface AdCardProps {
   ad: Ad;
@@ -10,6 +11,8 @@ interface AdCardProps {
 }
 
 export const AdCard = ({ ad, index = 0 }: AdCardProps) => {
+  const { t } = useTranslation();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -57,7 +60,7 @@ export const AdCard = ({ ad, index = 0 }: AdCardProps) => {
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Calendar className="w-3.5 h-3.5" />
-              <span>Until {new Date(ad.validUntil).toLocaleDateString()}</span>
+              <span>{t("adCard.validUntil")} {new Date(ad.validUntil).toLocaleDateString()}</span>
             </div>
           </div>
         </CardContent>

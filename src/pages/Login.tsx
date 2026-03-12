@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Logo } from "@/components/ui/Logo";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -16,6 +18,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,13 +27,13 @@ export default function Login() {
 
     try {
       if (!email || !password) {
-        throw new Error("Email and password are required");
+        throw new Error(t("login.fieldRequired"));
       }
 
       await login(email, password);
       navigate("/");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Login failed. Please try again.";
+      const message = err instanceof Error ? err.message : t("login.loginFailed");
       setError(message);
     } finally {
       setIsLoading(false);
@@ -44,8 +47,11 @@ export default function Login() {
           <div className="flex justify-center mb-2">
             <Logo />
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-          <CardDescription>Sign in to your account to continue</CardDescription>
+          <div className="flex justify-center">
+            <LanguageSwitcher />
+          </div>
+          <CardTitle className="text-2xl font-bold">{t("login.welcomeBack")}</CardTitle>
+          <CardDescription>{t("login.subtitle")}</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -58,11 +64,11 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">{t("login.email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("login.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
@@ -71,11 +77,11 @@ export default function Login() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("login.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("login.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
@@ -91,21 +97,21 @@ export default function Login() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Signing in...
+                  {t("login.signingIn")}
                 </>
               ) : (
-                "Sign In"
+                t("login.signIn")
               )}
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600">
-            Don't have an account?{" "}
+            {t("login.noAccount")}{" "}
             <Link
               to="/register"
               className="font-semibold text-indigo-600 hover:text-indigo-700"
             >
-              Create one
+              {t("login.createOne")}
             </Link>
           </div>
         </CardContent>

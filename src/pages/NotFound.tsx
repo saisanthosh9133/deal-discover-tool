@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import { Home, ArrowLeft, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NavBar from "@/components/NavBar";
+import { useTranslation } from "react-i18next";
 
 const NotFound = () => {
   const location = useLocation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
@@ -23,7 +25,6 @@ const NotFound = () => {
           transition={{ duration: 0.5 }}
           className="text-center max-w-md"
         >
-          {/* Animated 404 */}
           <motion.div
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
@@ -41,22 +42,26 @@ const NotFound = () => {
           </motion.div>
 
           <h1 className="text-2xl font-bold text-foreground mb-3">
-            Page Not Found
+            {t("notFound.title")}
           </h1>
           <p className="text-muted-foreground mb-8">
-            The page <code className="text-primary text-sm bg-secondary px-2 py-0.5 rounded">{location.pathname}</code> doesn't exist or may have been moved.
+            {t("notFound.desc", { path: "" }).split("<1>")[0]}
+            <code className="text-primary text-sm bg-secondary px-2 py-0.5 rounded">
+              {location.pathname}
+            </code>
+            {t("notFound.desc", { path: "" }).split("</1>")[1]}
           </p>
 
           <div className="flex items-center justify-center gap-3">
             <Link to="/">
               <Button className="gap-2">
                 <Home className="w-4 h-4" />
-                Go Home
+                {t("notFound.goHome")}
               </Button>
             </Link>
             <Button variant="outline" onClick={() => window.history.back()} className="gap-2">
               <ArrowLeft className="w-4 h-4" />
-              Go Back
+              {t("notFound.goBack")}
             </Button>
           </div>
         </motion.div>

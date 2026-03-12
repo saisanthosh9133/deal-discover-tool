@@ -23,6 +23,7 @@ import NavBar from "@/components/NavBar";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/context/AuthContext";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface UserAd {
     id: string;
@@ -42,6 +43,7 @@ interface UserAd {
 
 export default function Profile() {
     const { user } = useAuth();
+    const { t } = useTranslation();
     const [myAds, setMyAds] = useState<UserAd[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -68,10 +70,10 @@ export default function Profile() {
             const response = await api.delete(`/ads/${adId}`);
             if (response.data.success) {
                 setMyAds((prev) => prev.filter((ad) => (ad.id || ad._id) !== adId));
-                toast.success("Ad removed successfully");
+                toast.success(t("profile.deleteSuccess"));
             }
         } catch (err) {
-            toast.error("Failed to delete ad");
+            toast.error(t("profile.deleteFailed"));
         }
     };
 
@@ -90,13 +92,11 @@ export default function Profile() {
                     transition={{ duration: 0.4 }}
                 >
                     <Card className="border-border/50 bg-card shadow-card mb-8 overflow-hidden">
-                        {/* Gradient banner */}
                         <div className="h-32 bg-gradient-to-r from-primary/80 via-accent to-primary/60 relative">
                             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiLz48L3N2Zz4=')] opacity-50" />
                         </div>
 
                         <CardContent className="relative px-6 pb-6">
-                            {/* Avatar */}
                             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-12">
                                 <div className="w-24 h-24 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center text-3xl font-bold shadow-elevated border-4 border-card">
                                     {user?.name?.charAt(0).toUpperCase() || "U"}
@@ -110,14 +110,14 @@ export default function Profile() {
                                         </span>
                                         <span className="flex items-center gap-1">
                                             <Shield className="w-3.5 h-3.5" />
-                                            {user?.role === "ADMIN" ? "Admin" : "Member"}
+                                            {user?.role === "ADMIN" ? t("profile.admin") : t("profile.member")}
                                         </span>
                                     </div>
                                 </div>
                                 <Link to="/promote">
                                     <Button size="sm" className="gap-2">
                                         <Plus className="w-4 h-4" />
-                                        New Deal
+                                        {t("profile.newDeal")}
                                     </Button>
                                 </Link>
                             </div>
@@ -126,15 +126,15 @@ export default function Profile() {
                             <div className="grid grid-cols-3 gap-4 mt-6">
                                 <div className="bg-secondary/50 rounded-xl p-4 text-center">
                                     <div className="text-2xl font-bold text-foreground">{myAds.length}</div>
-                                    <div className="text-xs text-muted-foreground mt-1">Total Ads</div>
+                                    <div className="text-xs text-muted-foreground mt-1">{t("profile.totalAds")}</div>
                                 </div>
                                 <div className="bg-secondary/50 rounded-xl p-4 text-center">
                                     <div className="text-2xl font-bold text-primary">{activeAds.length}</div>
-                                    <div className="text-xs text-muted-foreground mt-1">Active</div>
+                                    <div className="text-xs text-muted-foreground mt-1">{t("profile.active")}</div>
                                 </div>
                                 <div className="bg-secondary/50 rounded-xl p-4 text-center">
                                     <div className="text-2xl font-bold text-foreground">{totalViews}</div>
-                                    <div className="text-xs text-muted-foreground mt-1">Total Views</div>
+                                    <div className="text-xs text-muted-foreground mt-1">{t("profile.totalViews")}</div>
                                 </div>
                             </div>
                         </CardContent>
@@ -150,7 +150,7 @@ export default function Profile() {
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                             <Megaphone className="w-5 h-5 text-primary" />
-                            My Deals
+                            {t("profile.myDeals")}
                         </h2>
                     </div>
 
@@ -164,14 +164,14 @@ export default function Profile() {
                                 <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                                     <Megaphone className="w-8 h-8 text-muted-foreground" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">No deals yet</h3>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">{t("profile.noDealsTitle")}</h3>
                                 <p className="text-muted-foreground text-sm mb-6 max-w-sm">
-                                    Start promoting your business deals and reach customers in your city.
+                                    {t("profile.noDealsDesc")}
                                 </p>
                                 <Link to="/promote">
                                     <Button className="gap-2">
                                         <Plus className="w-4 h-4" />
-                                        Create Your First Deal
+                                        {t("profile.createFirst")}
                                     </Button>
                                 </Link>
                             </CardContent>
@@ -188,7 +188,6 @@ export default function Profile() {
                                     <Card className={`border-border/50 bg-card shadow-sm transition-all duration-200 hover:shadow-card ${!ad.isActive ? "opacity-60" : ""}`}>
                                         <CardContent className="p-4">
                                             <div className="flex items-start gap-4">
-                                                {/* Image */}
                                                 {ad.imageUrl && (
                                                     <img
                                                         src={ad.imageUrl}
@@ -200,7 +199,6 @@ export default function Profile() {
                                                     />
                                                 )}
 
-                                                {/* Content */}
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div>
@@ -212,11 +210,11 @@ export default function Profile() {
                                                                 </span>
                                                                 <span className="flex items-center gap-1">
                                                                     <Eye className="w-3 h-3" />
-                                                                    {ad.views || 0} views
+                                                                    {ad.views || 0} {t("profile.views")}
                                                                 </span>
                                                                 <span className="flex items-center gap-1">
                                                                     <Calendar className="w-3 h-3" />
-                                                                    Until {new Date(ad.validUntil).toLocaleDateString()}
+                                                                    {t("adCard.validUntil")} {new Date(ad.validUntil).toLocaleDateString()}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -225,7 +223,7 @@ export default function Profile() {
                                                                 variant={ad.isActive ? "default" : "secondary"}
                                                                 className="text-xs"
                                                             >
-                                                                {ad.isActive ? ad.discount : "Inactive"}
+                                                                {ad.isActive ? ad.discount : t("profile.inactive")}
                                                             </Badge>
                                                             <Button
                                                                 variant="ghost"
@@ -238,7 +236,6 @@ export default function Profile() {
                                                         </div>
                                                     </div>
 
-                                                    {/* Keywords */}
                                                     <div className="flex flex-wrap gap-1 mt-2">
                                                         {ad.keywords.slice(0, 4).map((keyword) => (
                                                             <span

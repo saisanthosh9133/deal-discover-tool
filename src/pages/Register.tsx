@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Logo } from "@/components/ui/Logo";
 import { AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -18,26 +20,27 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const validateForm = (): boolean => {
     if (!name || !email || !password || !confirmPassword) {
-      setError("All fields are required");
+      setError(t("register.errors.allRequired"));
       return false;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError(t("register.errors.passwordLength"));
       return false;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("register.errors.passwordMatch"));
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError("Invalid email format");
+      setError(t("register.errors.invalidEmail"));
       return false;
     }
 
@@ -58,7 +61,7 @@ export default function Register() {
       await register(name, email, password);
       navigate("/");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Registration failed. Please try again.";
+      const message = err instanceof Error ? err.message : t("register.errors.failed");
       setError(message);
     } finally {
       setIsLoading(false);
@@ -67,9 +70,9 @@ export default function Register() {
 
   const passwordStrength = () => {
     if (!password) return { level: 0, text: "", color: "" };
-    if (password.length < 6) return { level: 1, text: "Weak", color: "text-red-600" };
-    if (password.length < 10) return { level: 2, text: "Fair", color: "text-yellow-600" };
-    return { level: 3, text: "Strong", color: "text-green-600" };
+    if (password.length < 6) return { level: 1, text: t("register.strength.weak"), color: "text-red-600" };
+    if (password.length < 10) return { level: 2, text: t("register.strength.fair"), color: "text-yellow-600" };
+    return { level: 3, text: t("register.strength.strong"), color: "text-green-600" };
   };
 
   const strength = passwordStrength();
@@ -81,8 +84,11 @@ export default function Register() {
           <div className="flex justify-center mb-2">
             <Logo />
           </div>
-          <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-          <CardDescription>Join us and start discovering deals</CardDescription>
+          <div className="flex justify-center">
+            <LanguageSwitcher />
+          </div>
+          <CardTitle className="text-2xl font-bold">{t("register.createAccount")}</CardTitle>
+          <CardDescription>{t("register.subtitle")}</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -95,11 +101,11 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">{t("register.fullName")}</Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="John Doe"
+                placeholder={t("register.namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isLoading}
@@ -108,11 +114,11 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">{t("register.email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("register.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
@@ -121,11 +127,11 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("register.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("register.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
@@ -135,13 +141,12 @@ export default function Register() {
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className={`h-full transition-all ${
-                        strength.level === 1
+                      className={`h-full transition-all ${strength.level === 1
                           ? "w-1/3 bg-red-500"
                           : strength.level === 2
-                          ? "w-2/3 bg-yellow-500"
-                          : "w-full bg-green-500"
-                      }`}
+                            ? "w-2/3 bg-yellow-500"
+                            : "w-full bg-green-500"
+                        }`}
                     />
                   </div>
                   {strength.text && (
@@ -154,11 +159,11 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">{t("register.confirmPassword")}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("register.passwordPlaceholder")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={isLoading}
@@ -167,7 +172,7 @@ export default function Register() {
               {confirmPassword && password === confirmPassword && (
                 <div className="flex items-center gap-1 text-green-600 text-xs">
                   <CheckCircle2 className="w-4 h-4" />
-                  Passwords match
+                  {t("register.passwordsMatch")}
                 </div>
               )}
             </div>
@@ -180,18 +185,18 @@ export default function Register() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating account...
+                  {t("register.creating")}
                 </>
               ) : (
-                "Create Account"
+                t("register.createBtn")
               )}
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600">
-            Already have an account?{" "}
+            {t("register.haveAccount")}{" "}
             <Link to="/login" className="font-semibold text-indigo-600 hover:text-indigo-700">
-              Sign in
+              {t("register.signIn")}
             </Link>
           </div>
         </CardContent>

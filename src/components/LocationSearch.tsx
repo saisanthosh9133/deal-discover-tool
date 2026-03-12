@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Loader } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 interface LocationSearchProps {
   value: string;
@@ -25,10 +26,11 @@ interface NearbyCity {
 export default function LocationSearch({
   value,
   onChange,
-  placeholder = "Search city...",
-  label = "Location",
+  placeholder,
+  label,
 }: LocationSearchProps) {
   const { searchResults, searching, searchLocations } = useLocationSearch();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
   const [nearestCities, setNearestCities] = useState<NearbyCity[]>([]);
@@ -83,7 +85,7 @@ export default function LocationSearch({
 
   const handleUseMyLocation = () => {
     if (!("geolocation" in navigator)) {
-      toast.error("Geolocation is not supported in your browser");
+      toast.error(t("location.noGeo"));
       return;
     }
 
@@ -94,7 +96,6 @@ export default function LocationSearch({
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-          // Use server-side nearest search — fast, no need to download all cities
           const response = await api.get("/locations/nearby", {
             params: { latitude, longitude, limit: 5 },
           });
@@ -106,14 +107,13 @@ export default function LocationSearch({
             }));
             setNearestCities(cities);
             setShowNearby(true);
-            // Auto-select closest city
             handleSelectLocation(cities[0].displayName);
-            toast.success(`📍 Found nearest city: ${cities[0].displayName}`);
+            toast.success(t("location.foundNearest", { city: cities[0].displayName }));
           } else {
-            toast.error("No nearby cities found");
+            toast.error(t("location.noNearby"));
           }
         } catch {
-          toast.error("Failed to find nearby cities");
+          toast.error(t("location.geoFailed"));
         } finally {
           setGeoLoading(false);
         }
@@ -121,11 +121,11 @@ export default function LocationSearch({
       (error) => {
         setGeoLoading(false);
         if (error.code === error.PERMISSION_DENIED) {
-          toast.error("Location permission denied. Enable it in browser settings.");
+          toast.error(t("location.permDenied"));
         } else if (error.code === error.TIMEOUT) {
-          toast.error("Location request timed out. Try again.");
+          toast.error(t("location.timeout"));
         } else {
-          toast.error("Unable to get your location");
+          toast.error(t("location.unableGeo"));
         }
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
@@ -147,17 +147,17 @@ export default function LocationSearch({
             onClick={handleUseMyLocation}
             disabled={geoLoading}
             className="h-6 px-2 text-xs"
-            title="Use your current location"
+            title={t("location.myLocation")}
           >
             {geoLoading ? (
               <>
                 <Loader className="w-3 h-3 animate-spin mr-1" />
-                Locating...
+                {t("location.locating")}
               </>
             ) : (
               <>
                 <MapPin className="w-3 h-3 mr-1" />
-                My Location
+                {t("location.myLocation")}
               </>
             )}
           </Button>
@@ -167,7 +167,7 @@ export default function LocationSearch({
       <div className="relative">
         <Input
           type="text"
-          placeholder={placeholder}
+          placeholder={placeholder || t("home.locationPlaceholder")}
           value={inputValue}
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
@@ -191,12 +191,12 @@ export default function LocationSearch({
           {geoLoading ? (
             <div className="p-3 text-center text-sm text-muted-foreground">
               <Loader className="w-4 h-4 animate-spin inline mr-2" />
-              Getting your location...
+              {t("location.locating")}
             </div>
           ) : showNearby && nearestCities.length > 0 ? (
             <div>
               <div className="px-3 py-2 border-b border-border text-xs font-semibold text-muted-foreground bg-secondary">
-                📍 Nearby Cities ({nearestCities.length})
+                {t("location.nearbyCities", { count: nearestCities.length })}
               </div>
               <ul className="py-1">
                 {nearestCities.map((city) => (
@@ -223,7 +223,7 @@ export default function LocationSearch({
             </div>
           ) : searching ? (
             <div className="p-3 text-center text-sm text-muted-foreground">
-              Searching...
+              {t("location.searching")}
             </div>
           ) : searchResults.length > 0 ? (
             <ul className="py-1">
@@ -243,11 +243,11 @@ export default function LocationSearch({
             </ul>
           ) : inputValue ? (
             <div className="p-3 text-center text-sm text-muted-foreground">
-              No locations found
+              {t("location.noLocationsFound")}
             </div>
           ) : (
             <div className="p-3 text-center text-sm text-muted-foreground">
-              Start typing to search or use "My Location"
+              {t("location.startTyping")}
             </div>
           )}
         </div>
