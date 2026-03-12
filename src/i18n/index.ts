@@ -5,6 +5,10 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import en from "./locales/en.json";
 import hi from "./locales/hi.json";
 import te from "./locales/te.json";
+import kn from "./locales/kn.json";
+
+// The rest of the setup configuration remains the same
+// ...
 
 i18n
     .use(LanguageDetector)
@@ -14,9 +18,10 @@ i18n
             en: { translation: en },
             hi: { translation: hi },
             te: { translation: te },
+            kn: { translation: kn },
         },
         fallbackLng: "en",
-        supportedLngs: ["en", "hi", "te"],
+        supportedLngs: ["en", "hi", "te", "kn"],
         detection: {
             // Check localStorage first, then browser language
             order: ["localStorage", "navigator"],

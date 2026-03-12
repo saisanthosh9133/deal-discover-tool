@@ -10,6 +10,18 @@ export interface Ad {
   validUntil: string;
   avgRating?: number;
   totalRatings?: number;
+  views?: number;
+  location?: {
+    lat: number;
+    lng: number;
+  };
+  viewHistory?: {
+    date: string;
+    views: number;
+  }[];
+  ratings?: {
+    value: number;
+  }[];
 }
 
 

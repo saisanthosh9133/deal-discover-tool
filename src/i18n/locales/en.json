@@ -39,7 +39,25 @@
     "footerCTA": "Promote My Ad"
   },
   "adCard": {
-    "validUntil": "Until"
+    "validUntil": "Valid Until",
+    "rateThis": "Rate this:",
+    "rateSuccess": "Thank you for rating!",
+    "rateError": "Failed to submit rating",
+    "savedToFavorites": "Saved to Favorites ❤️",
+    "removedFromFavorites": "Removed from Favorites",
+    "expiringSoon": "Expiring Soon!"
+  },
+  "adDetail": {
+    "loading": "Loading ad details...",
+    "notFound": "Ad not found",
+    "backToHome": "Back to Home",
+    "back": "Back",
+    "reviews": "reviews",
+    "rateThisAd": "Rate:",
+    "rate": "Rate {{star}} stars"
+  },
+  "auth": {
+    "loginRequired": "Please login to rate ads"
   },
   "login": {
     "welcomeBack": "Welcome Back",
@@ -91,6 +109,9 @@
     "member": "Member",
     "admin": "Admin",
     "newDeal": "New Deal",
+    "myFavorites": "Saved Favorites",
+    "noFavoritesTitle": "No saved deals yet",
+    "noFavoritesDesc": "Browse deals and click the heart icon to save your favorites here for quick access later.",
     "noDealsTitle": "No deals yet",
     "noDealsDesc": "Start promoting your business deals and reach customers in your city.",
     "createFirst": "Create Your First Deal",

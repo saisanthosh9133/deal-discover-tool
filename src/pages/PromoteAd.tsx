@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/ui/Logo";
 import LocationSearch from "@/components/LocationSearch";
+import { MapPicker } from "@/components/MapPicker";
 import { popularKeywords } from "@/data/mockAds";
 import { useAds } from "@/context/AdsContext";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ export default function PromoteAd() {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState("");
   const [city, setCity] = useState("");
+  const [location, setLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [discount, setDiscount] = useState("");
@@ -80,6 +82,7 @@ export default function PromoteAd() {
         imageUrl: images[0] || "",
         keywords,
         city,
+        location: location || undefined,
         discount: discount || "SPECIAL OFFER",
         businessName: businessName || "Local Business",
         validUntil: validUntil.toISOString().split("T")[0],
@@ -212,6 +215,12 @@ export default function PromoteAd() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <LocationSearch value={city} onChange={setCity} placeholder={t("home.locationPlaceholder")} label={t("promote.cityLabel")} />
+
+                <div className="pt-2 pb-2">
+                  <Label className="mb-2 block">Pinpoint Exact Location (Optional)</Label>
+                  <MapPicker value={location} onChange={setLocation} />
+                </div>
+
                 <div>
                   <Label>{t("promote.keywordsLabel")}</Label>
                   <div className="flex gap-2 mt-1.5">

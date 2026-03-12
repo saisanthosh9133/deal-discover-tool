@@ -45,6 +45,16 @@ const adSchema = new mongoose.Schema({
         required: [true, "City is required"],
         trim: true,
     },
+    location: {
+        lat: {
+            type: Number,
+            required: false,
+        },
+        lng: {
+            type: Number,
+            required: false,
+        }
+    },
     discount: {
         type: String,
         default: "SPECIAL OFFER",
@@ -72,6 +82,10 @@ const adSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    viewHistory: [{
+        date: { type: String, required: true }, // Format: YYYY-MM-DD
+        views: { type: Number, default: 0 }
+    }],
     ratings: {
         type: [ratingSchema],
         default: [],

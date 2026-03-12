@@ -20,10 +20,12 @@ interface ServerAd {
 
 interface AdsContextType {
   ads: Ad[];
+  favorites: string[];
   loading: boolean;
   error: string | null;
   addAd: (ad: Omit<Ad, "id">) => Promise<void>;
   rateAd: (id: string, value: number) => Promise<void>;
+  toggleFavorite: (id: string) => void;
   refreshAds: () => Promise<void>;
 }
 
@@ -31,9 +33,22 @@ const AdsContext = createContext<AdsContextType | undefined>(undefined);
 
 export function AdsProvider({ children }: { children: ReactNode }) {
   const [serverAds, setServerAds] = useState<Ad[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated } = useAuth();
+
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("dd_favorites");
+    if (saved) {
+      try {
+        setFavorites(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse favorites");
+      }
+    }
+  }, []);
 
   // Fetch ads from API, fallback to mock data if backend is down
   const fetchAds = useCallback(async () => {
@@ -129,8 +144,17 @@ export function AdsProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) => {
+      const isFavorited = prev.includes(id);
+      const newFavorites = isFavorited ? prev.filter((fId) => fId !== id) : [...prev, id];
+      localStorage.setItem("dd_favorites", JSON.stringify(newFavorites));
+      return newFavorites;
+    });
+  };
+
   return (
-    <AdsContext.Provider value={{ ads, loading, error, addAd, rateAd, refreshAds: fetchAds }}>
+    <AdsContext.Provider value={{ ads, favorites, loading, error, addAd, rateAd, toggleFavorite, refreshAds: fetchAds }}>
       {children}
     </AdsContext.Provider>
   );

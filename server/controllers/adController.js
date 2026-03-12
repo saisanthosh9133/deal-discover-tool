@@ -5,7 +5,7 @@ import Ad from "../models/Ad.js";
 // @access  Private
 export const createAd = async (req, res) => {
     try {
-        const { title, description, imageUrl, keywords, city, discount, businessName, validUntil } = req.body;
+        const { title, description, imageUrl, keywords, city, location, discount, businessName, validUntil } = req.body;
 
         // Validation
         if (!title || !keywords || keywords.length === 0 || !city || !businessName) {
@@ -21,6 +21,7 @@ export const createAd = async (req, res) => {
             imageUrl: imageUrl || "",
             keywords: keywords.map((k) => k.toLowerCase().trim()),
             city: city.trim(),
+            location: location || null,
             discount: discount || "SPECIAL OFFER",
             businessName: businessName.trim(),
             validUntil: validUntil ? new Date(validUntil) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -119,8 +120,19 @@ export const getAdById = async (req, res) => {
             return res.status(404).json({ success: false, message: "Ad not found" });
         }
 
-        // Increment view count
+        // Increment total view count
         ad.views += 1;
+
+        // Increment daily view count for analytics
+        const today = new Date().toISOString().split("T")[0];
+        const historyIndex = ad.viewHistory.findIndex(h => h.date === today);
+
+        if (historyIndex >= 0) {
+            ad.viewHistory[historyIndex].views += 1;
+        } else {
+            ad.viewHistory.push({ date: today, views: 1 });
+        }
+
         await ad.save();
 
         res.status(200).json({
@@ -148,7 +160,7 @@ export const updateAd = async (req, res) => {
             return res.status(403).json({ success: false, message: "Not authorized to update this ad" });
         }
 
-        const allowedUpdates = ["title", "description", "imageUrl", "keywords", "city", "discount", "businessName", "validUntil"];
+        const allowedUpdates = ["title", "description", "imageUrl", "keywords", "city", "location", "discount", "businessName", "validUntil"];
         const updates = {};
 
         for (const key of allowedUpdates) {
