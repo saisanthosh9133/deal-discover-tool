@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    allowedHosts: ["deal-discover-tool.onrender.com"],
+    allowedHosts: ["deal-discover-tool.onrender.com", "democratic-handy-dover-nodes.trycloudflare.com"],
     proxy: {
       // Forward all /api requests to the Express backend
       "/api": {
