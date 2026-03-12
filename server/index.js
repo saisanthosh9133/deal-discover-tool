@@ -10,16 +10,11 @@ import authRoutes from "./routes/auth.js";
 import locationRoutes from "./routes/locations.js";
 import adRoutes from "./routes/ads.js";
 
-<<<<<<< HEAD
 // Load .env from server/ directory (works regardless of CWD)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, ".env") });
 // Also try project root .env as fallback
 dotenv.config();
-=======
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, ".env") });
->>>>>>> fecfb75 (Role: You are a Senior Frontend Architect specializing in component consolidation and dry principles.)
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -49,9 +44,18 @@ app.use("/api/auth", authLimiter);
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:8080",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like curl / Postman)
+    if (!origin) return callback(null, true);
+    // Allow any localhost port for local development
+    if (/^http:\/\/localhost:\d+$/.test(origin) || origin === process.env.CLIENT_URL) {
+      return callback(null, true);
+    }
+    callback(new Error("Not allowed by CORS"));
+  },
   credentials: true,
 }));
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 

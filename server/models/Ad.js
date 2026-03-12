@@ -1,5 +1,20 @@
 import mongoose from "mongoose";
 
+const ratingSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
+    value: {
+        type: Number,
+        required: true,
+        min: 1,
+        max: 5,
+    },
+    createdAt: { type: Date, default: Date.now },
+});
+
 const adSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -30,6 +45,16 @@ const adSchema = new mongoose.Schema({
         required: [true, "City is required"],
         trim: true,
     },
+    location: {
+        lat: {
+            type: Number,
+            required: false,
+        },
+        lng: {
+            type: Number,
+            required: false,
+        }
+    },
     discount: {
         type: String,
         default: "SPECIAL OFFER",
@@ -57,6 +82,14 @@ const adSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    viewHistory: [{
+        date: { type: String, required: true }, // Format: YYYY-MM-DD
+        views: { type: Number, default: 0 }
+    }],
+    ratings: {
+        type: [ratingSchema],
+        default: [],
+    },
     createdAt: {
         type: Date,
         default: Date.now,
@@ -67,12 +100,25 @@ const adSchema = new mongoose.Schema({
     },
 });
 
+// Virtual: average rating
+adSchema.virtual("avgRating").get(function () {
+    if (!this.ratings || this.ratings.length === 0) return 0;
+    const sum = this.ratings.reduce((acc, r) => acc + r.value, 0);
+    return Math.round((sum / this.ratings.length) * 10) / 10;
+});
+
+// Virtual: total ratings count
+adSchema.virtual("totalRatings").get(function () {
+    return this.ratings ? this.ratings.length : 0;
+});
+
 // Indexes for common queries
 adSchema.index({ city: 1, isActive: 1 });
 adSchema.index({ keywords: 1 });
 adSchema.index({ userId: 1 });
 adSchema.index({ validUntil: 1 });
 adSchema.index({ createdAt: -1 });
+adSchema.index({ "ratings.userId": 1 });
 
 // Auto-update the updatedAt field
 adSchema.pre("save", function (next) {
@@ -80,11 +126,14 @@ adSchema.pre("save", function (next) {
     next();
 });
 
-// Clean toJSON output
+// Clean toJSON output — include virtuals
 adSchema.methods.toJSON = function () {
-    const ad = this.toObject();
+    const ad = this.toObject({ virtuals: true });
     ad.id = ad._id.toString();
+    ad.avgRating = this.avgRating;
+    ad.totalRatings = this.totalRatings;
     return ad;
 };
 
 export default mongoose.model("Ad", adSchema);
+

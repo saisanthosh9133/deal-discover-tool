@@ -5,7 +5,7 @@ import Ad from "../models/Ad.js";
 // @access  Private
 export const createAd = async (req, res) => {
     try {
-        const { title, description, imageUrl, keywords, city, discount, businessName, validUntil } = req.body;
+        const { title, description, imageUrl, keywords, city, location, discount, businessName, validUntil } = req.body;
 
         // Validation
         if (!title || !keywords || keywords.length === 0 || !city || !businessName) {
@@ -21,6 +21,7 @@ export const createAd = async (req, res) => {
             imageUrl: imageUrl || "",
             keywords: keywords.map((k) => k.toLowerCase().trim()),
             city: city.trim(),
+            location: location || null,
             discount: discount || "SPECIAL OFFER",
             businessName: businessName.trim(),
             validUntil: validUntil ? new Date(validUntil) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -119,8 +120,19 @@ export const getAdById = async (req, res) => {
             return res.status(404).json({ success: false, message: "Ad not found" });
         }
 
-        // Increment view count
+        // Increment total view count
         ad.views += 1;
+
+        // Increment daily view count for analytics
+        const today = new Date().toISOString().split("T")[0];
+        const historyIndex = ad.viewHistory.findIndex(h => h.date === today);
+
+        if (historyIndex >= 0) {
+            ad.viewHistory[historyIndex].views += 1;
+        } else {
+            ad.viewHistory.push({ date: today, views: 1 });
+        }
+
         await ad.save();
 
         res.status(200).json({
@@ -148,7 +160,7 @@ export const updateAd = async (req, res) => {
             return res.status(403).json({ success: false, message: "Not authorized to update this ad" });
         }
 
-        const allowedUpdates = ["title", "description", "imageUrl", "keywords", "city", "discount", "businessName", "validUntil"];
+        const allowedUpdates = ["title", "description", "imageUrl", "keywords", "city", "location", "discount", "businessName", "validUntil"];
         const updates = {};
 
         for (const key of allowedUpdates) {
@@ -234,5 +246,53 @@ export const getAdCities = async (req, res) => {
     } catch (error) {
         console.error("Get ad cities error:", error);
         res.status(500).json({ success: false, message: "Failed to fetch cities" });
+    }
+};
+
+// @desc    Rate an ad
+// @route   POST /api/ads/:id/rate
+// @access  Private
+export const rateAd = async (req, res) => {
+    try {
+        const { value } = req.body;
+
+        if (!value || value < 1 || value > 5) {
+            return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
+        }
+
+        const ad = await Ad.findById(req.params.id);
+
+        if (!ad) {
+            return res.status(404).json({ success: false, message: "Ad not found" });
+        }
+
+        // Check if user already rated
+        const existingRatingIndex = ad.ratings.findIndex(
+            (r) => r.userId.toString() === req.user.id
+        );
+
+        if (existingRatingIndex >= 0) {
+            // Update existing rating
+            ad.ratings[existingRatingIndex].value = value;
+            ad.ratings[existingRatingIndex].createdAt = new Date();
+        } else {
+            // Add new rating
+            ad.ratings.push({
+                userId: req.user.id,
+                value,
+                createdAt: new Date(),
+            });
+        }
+
+        await ad.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Rating submitted",
+            ad: ad.toJSON(),
+        });
+    } catch (error) {
+        console.error("Rate ad error:", error);
+        res.status(500).json({ success: false, message: "Failed to submit rating" });
     }
 };

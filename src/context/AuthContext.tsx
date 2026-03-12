@@ -97,8 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         throw new Error(response.data.message || "Login failed");
       }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Login failed";
+    } catch (error: any) {
+      const message = error.response?.data?.message || error.message || "Login failed";
       throw new Error(message);
     }
   };
@@ -119,8 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         throw new Error(response.data.message || "Registration failed");
       }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Registration failed";
+    } catch (error: any) {
+      const message = error.response?.data?.message || error.message || "Registration failed";
       throw new Error(message);
     }
   };

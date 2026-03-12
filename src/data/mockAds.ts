@@ -8,7 +8,22 @@ export interface Ad {
   discount: string;
   businessName: string;
   validUntil: string;
+  avgRating?: number;
+  totalRatings?: number;
+  views?: number;
+  location?: {
+    lat: number;
+    lng: number;
+  };
+  viewHistory?: {
+    date: string;
+    views: number;
+  }[];
+  ratings?: {
+    value: number;
+  }[];
 }
+
 
 export const mockAds: Ad[] = [
   {

@@ -10,17 +10,21 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/ui/Logo";
 import LocationSearch from "@/components/LocationSearch";
+import { MapPicker } from "@/components/MapPicker";
 import { popularKeywords } from "@/data/mockAds";
 import { useAds } from "@/context/AdsContext";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export default function PromoteAd() {
   const navigate = useNavigate();
   const { addAd } = useAds();
+  const { t } = useTranslation();
   const [images, setImages] = useState<string[]>([]);
   const [keywords, setKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState("");
   const [city, setCity] = useState("");
+  const [location, setLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [discount, setDiscount] = useState("");
@@ -62,14 +66,13 @@ export default function PromoteAd() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !city || keywords.length === 0) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("promote.errorRequired"));
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Calculate valid until date (30 days from now)
       const validUntil = new Date();
       validUntil.setDate(validUntil.getDate() + 30);
 
@@ -79,17 +82,18 @@ export default function PromoteAd() {
         imageUrl: images[0] || "",
         keywords,
         city,
+        location: location || undefined,
         discount: discount || "SPECIAL OFFER",
         businessName: businessName || "Local Business",
         validUntil: validUntil.toISOString().split("T")[0],
       });
 
-      toast.success("Your offer is now live!", {
-        description: "Customers in your city can now discover your deal.",
+      toast.success(t("promote.successTitle"), {
+        description: t("promote.successDesc"),
       });
       setTimeout(() => navigate("/"), 1500);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to create ad. Please try again.";
+      const message = err instanceof Error ? err.message : t("promote.errorRequired");
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -98,7 +102,6 @@ export default function PromoteAd() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/">
@@ -107,7 +110,7 @@ export default function PromoteAd() {
           <Link to="/">
             <Button variant="ghost" size="sm" className="gap-2">
               <ArrowLeft className="w-4 h-4" />
-              Back to Home
+              {t("promote.backToHome")}
             </Button>
           </Link>
         </div>
@@ -121,19 +124,26 @@ export default function PromoteAd() {
         >
           <div className="text-center mb-8">
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-              Promote Your <span className="text-primary">Offer</span>
+              {t("promote.title").split("<1>")[0]}
+              <span className="text-primary">
+                {t("promote.title").includes("<1>")
+                  ? t("promote.title").split("<1>")[1]?.split("</1>")[0]
+                  : "Offer"}
+              </span>
+              {t("promote.title").includes("</1>")
+                ? t("promote.title").split("</1>")[1]
+                : ""}
             </h1>
-            <p className="text-muted-foreground text-lg">
-              Reach thousands of customers looking for great deals
-            </p>
+            <p className="text-muted-foreground text-lg">{t("promote.subtitle")}</p>
           </div>
 
           <form onSubmit={handleSubmit}>
+            {/* Images */}
             <Card className="shadow-card mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ImageIcon className="w-5 h-5 text-primary" />
-                  Upload Images
+                  {t("promote.uploadImages")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -145,11 +155,7 @@ export default function PromoteAd() {
                       animate={{ opacity: 1, scale: 1 }}
                       className="relative aspect-square rounded-lg overflow-hidden group"
                     >
-                      <img
-                        src={img}
-                        alt={`Upload ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={img} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
@@ -162,93 +168,64 @@ export default function PromoteAd() {
                   {images.length < 4 && (
                     <label className="aspect-square border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
                       <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">Add Photo</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageUpload}
-                        className="hidden"
-                      />
+                      <span className="text-sm text-muted-foreground">{t("promote.addPhoto")}</span>
+                      <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
                     </label>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Upload up to 4 images. First image will be the main display.
-                </p>
+                <p className="text-sm text-muted-foreground">{t("promote.uploadHint")}</p>
               </CardContent>
             </Card>
 
+            {/* Offer Details */}
             <Card className="shadow-card mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Tag className="w-5 h-5 text-primary" />
-                  Offer Details
+                  {t("promote.offerDetails")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="title">Offer Title *</Label>
-                  <Input
-                    id="title"
-                    placeholder="e.g., 50% Off on All Pizzas"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="mt-1.5"
-                  />
+                  <Label htmlFor="title">{t("promote.offerTitle")}</Label>
+                  <Input id="title" placeholder={t("promote.offerTitlePlaceholder")} value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1.5" />
                 </div>
                 <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe your offer in detail..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="mt-1.5 min-h-[100px]"
-                  />
+                  <Label htmlFor="description">{t("promote.description")}</Label>
+                  <Textarea id="description" placeholder={t("promote.descriptionPlaceholder")} value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1.5 min-h-[100px]" />
                 </div>
                 <div>
-                  <Label htmlFor="discount">Discount/Offer</Label>
-                  <Input
-                    id="discount"
-                    placeholder="e.g., 50% OFF, BOGO, FREE"
-                    value={discount}
-                    onChange={(e) => setDiscount(e.target.value)}
-                    className="mt-1.5"
-                  />
+                  <Label htmlFor="discount">{t("promote.discount")}</Label>
+                  <Input id="discount" placeholder={t("promote.discountPlaceholder")} value={discount} onChange={(e) => setDiscount(e.target.value)} className="mt-1.5" />
                 </div>
                 <div>
-                  <Label htmlFor="businessName">Business Name</Label>
-                  <Input
-                    id="businessName"
-                    placeholder="e.g., Pizza Paradise"
-                    value={businessName}
-                    onChange={(e) => setBusinessName(e.target.value)}
-                    className="mt-1.5"
-                  />
+                  <Label htmlFor="businessName">{t("promote.businessName")}</Label>
+                  <Input id="businessName" placeholder={t("promote.businessNamePlaceholder")} value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="mt-1.5" />
                 </div>
               </CardContent>
             </Card>
 
+            {/* Location & Keywords */}
             <Card className="shadow-card mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-primary" />
-                  Location & Keywords
+                  {t("promote.locationAndKeywords")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <LocationSearch
-                  value={city}
-                  onChange={setCity}
-                  placeholder="Search your city..."
-                  label="City *"
-                />
+                <LocationSearch value={city} onChange={setCity} placeholder={t("home.locationPlaceholder")} label={t("promote.cityLabel")} />
+
+                <div className="pt-2 pb-2">
+                  <Label className="mb-2 block">Pinpoint Exact Location (Optional)</Label>
+                  <MapPicker value={location} onChange={setLocation} />
+                </div>
+
                 <div>
-                  <Label>Keywords *</Label>
+                  <Label>{t("promote.keywordsLabel")}</Label>
                   <div className="flex gap-2 mt-1.5">
                     <Input
-                      placeholder="Add keyword..."
+                      placeholder={t("promote.keywordsPlaceholder")}
                       value={keywordInput}
                       onChange={(e) => setKeywordInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -258,28 +235,16 @@ export default function PromoteAd() {
                         }
                       }}
                     />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => addKeyword(keywordInput)}
-                    >
-                      Add
+                    <Button type="button" variant="secondary" onClick={() => addKeyword(keywordInput)}>
+                      {t("promote.addKeyword")}
                     </Button>
                   </div>
                   {keywords.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3">
                       {keywords.map((keyword) => (
-                        <Badge
-                          key={keyword}
-                          variant="secondary"
-                          className="gap-1.5 py-1.5 px-3"
-                        >
+                        <Badge key={keyword} variant="secondary" className="gap-1.5 py-1.5 px-3">
                           {keyword}
-                          <button
-                            type="button"
-                            onClick={() => removeKeyword(keyword)}
-                            className="hover:text-destructive"
-                          >
+                          <button type="button" onClick={() => removeKeyword(keyword)} className="hover:text-destructive">
                             <X className="w-3 h-3" />
                           </button>
                         </Badge>
@@ -287,7 +252,7 @@ export default function PromoteAd() {
                     </div>
                   )}
                   <div className="mt-3">
-                    <span className="text-sm text-muted-foreground">Popular: </span>
+                    <span className="text-sm text-muted-foreground">{t("promote.popular")} </span>
                     {popularKeywords.slice(0, 6).map((kw) => (
                       <button
                         key={kw}
@@ -304,9 +269,9 @@ export default function PromoteAd() {
               </CardContent>
             </Card>
 
-            <Button type="submit" size="lg" className="w-full gap-2 shadow-elevated">
+            <Button type="submit" size="lg" className="w-full gap-2 shadow-elevated" disabled={isSubmitting}>
               <Check className="w-5 h-5" />
-              Submit Your Offer
+              {t("promote.submitButton")}
             </Button>
           </form>
         </motion.div>

@@ -14,6 +14,8 @@ import {
     Mail,
     Shield,
     Loader2,
+    Heart,
+    BarChart2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +24,12 @@ import { Logo } from "@/components/ui/Logo";
 import NavBar from "@/components/NavBar";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/context/AuthContext";
+import { useAds } from "@/context/AdsContext";
+import { AdCard } from "@/components/AdCard";
+import { AnalyticsDialog } from "@/components/AnalyticsDialog";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { Ad } from "@/data/mockAds";
 
 interface UserAd {
     id: string;
@@ -42,8 +49,16 @@ interface UserAd {
 
 export default function Profile() {
     const { user } = useAuth();
+    const { t } = useTranslation();
+    const { ads, favorites } = useAds();
+
     const [myAds, setMyAds] = useState<UserAd[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<"published" | "favorites">("published");
+    const [selectedAdForAnalytics, setSelectedAdForAnalytics] = useState<Ad | null>(null);
+
+    // Filter global ads down to just the ones the user favorited
+    const savedAds = ads.filter(ad => favorites.includes(ad.id));
 
     useEffect(() => {
         fetchMyAds();
@@ -68,10 +83,10 @@ export default function Profile() {
             const response = await api.delete(`/ads/${adId}`);
             if (response.data.success) {
                 setMyAds((prev) => prev.filter((ad) => (ad.id || ad._id) !== adId));
-                toast.success("Ad removed successfully");
+                toast.success(t("profile.deleteSuccess"));
             }
         } catch (err) {
-            toast.error("Failed to delete ad");
+            toast.error(t("profile.deleteFailed"));
         }
     };
 
@@ -90,13 +105,11 @@ export default function Profile() {
                     transition={{ duration: 0.4 }}
                 >
                     <Card className="border-border/50 bg-card shadow-card mb-8 overflow-hidden">
-                        {/* Gradient banner */}
                         <div className="h-32 bg-gradient-to-r from-primary/80 via-accent to-primary/60 relative">
                             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiLz48L3N2Zz4=')] opacity-50" />
                         </div>
 
                         <CardContent className="relative px-6 pb-6">
-                            {/* Avatar */}
                             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-12">
                                 <div className="w-24 h-24 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center text-3xl font-bold shadow-elevated border-4 border-card">
                                     {user?.name?.charAt(0).toUpperCase() || "U"}
@@ -110,14 +123,14 @@ export default function Profile() {
                                         </span>
                                         <span className="flex items-center gap-1">
                                             <Shield className="w-3.5 h-3.5" />
-                                            {user?.role === "ADMIN" ? "Admin" : "Member"}
+                                            {user?.role === "ADMIN" ? t("profile.admin") : t("profile.member")}
                                         </span>
                                     </div>
                                 </div>
                                 <Link to="/promote">
                                     <Button size="sm" className="gap-2">
                                         <Plus className="w-4 h-4" />
-                                        New Deal
+                                        {t("profile.newDeal")}
                                     </Button>
                                 </Link>
                             </div>
@@ -126,140 +139,219 @@ export default function Profile() {
                             <div className="grid grid-cols-3 gap-4 mt-6">
                                 <div className="bg-secondary/50 rounded-xl p-4 text-center">
                                     <div className="text-2xl font-bold text-foreground">{myAds.length}</div>
-                                    <div className="text-xs text-muted-foreground mt-1">Total Ads</div>
+                                    <div className="text-xs text-muted-foreground mt-1">{t("profile.totalAds")}</div>
                                 </div>
                                 <div className="bg-secondary/50 rounded-xl p-4 text-center">
                                     <div className="text-2xl font-bold text-primary">{activeAds.length}</div>
-                                    <div className="text-xs text-muted-foreground mt-1">Active</div>
+                                    <div className="text-xs text-muted-foreground mt-1">{t("profile.active")}</div>
                                 </div>
                                 <div className="bg-secondary/50 rounded-xl p-4 text-center">
                                     <div className="text-2xl font-bold text-foreground">{totalViews}</div>
-                                    <div className="text-xs text-muted-foreground mt-1">Total Views</div>
+                                    <div className="text-xs text-muted-foreground mt-1">{t("profile.totalViews")}</div>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
                 </motion.div>
 
-                {/* My Ads Section */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.4 }}
-                >
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                            <Megaphone className="w-5 h-5 text-primary" />
-                            My Deals
-                        </h2>
-                    </div>
+                {/* Tabs Toggle */}
+                <div className="flex border-b border-border mb-8">
+                    <button
+                        onClick={() => setActiveTab("published")}
+                        className={`flex-1 py-4 text-center font-medium pr-4 sm:pr-0 border-b-2 transition-colors flex items-center justify-center gap-2 ${activeTab === "published"
+                            ? "border-primary text-primary"
+                            : "border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/20"
+                            }`}
+                    >
+                        <Megaphone className="w-5 h-5" />
+                        {t("profile.myDeals", "My Deals")}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("favorites")}
+                        className={`flex-1 py-4 text-center font-medium pl-4 sm:pl-0 border-b-2 transition-colors flex items-center justify-center gap-2 ${activeTab === "favorites"
+                            ? "border-primary text-primary"
+                            : "border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/20"
+                            }`}
+                    >
+                        <Heart className="w-5 h-5" />
+                        {t("profile.myFavorites", "Saved Favorites")}
+                    </button>
+                </div>
 
-                    {loading ? (
-                        <div className="flex items-center justify-center py-16">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                {/* Tab Content */}
+                {activeTab === "published" ? (
+                    <motion.div
+                        key="published"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                                <Megaphone className="w-5 h-5 text-primary" />
+                                {t("profile.myDeals")}
+                            </h2>
                         </div>
-                    ) : myAds.length === 0 ? (
-                        <Card className="border-dashed border-2 border-border">
-                            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-                                    <Megaphone className="w-8 h-8 text-muted-foreground" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">No deals yet</h3>
-                                <p className="text-muted-foreground text-sm mb-6 max-w-sm">
-                                    Start promoting your business deals and reach customers in your city.
-                                </p>
-                                <Link to="/promote">
-                                    <Button className="gap-2">
-                                        <Plus className="w-4 h-4" />
-                                        Create Your First Deal
-                                    </Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <div className="space-y-4">
-                            {myAds.map((ad, index) => (
-                                <motion.div
-                                    key={ad.id || ad._id}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                >
-                                    <Card className={`border-border/50 bg-card shadow-sm transition-all duration-200 hover:shadow-card ${!ad.isActive ? "opacity-60" : ""}`}>
-                                        <CardContent className="p-4">
-                                            <div className="flex items-start gap-4">
-                                                {/* Image */}
-                                                {ad.imageUrl && (
-                                                    <img
-                                                        src={ad.imageUrl}
-                                                        alt={ad.title}
-                                                        className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
-                                                        onError={(e) => {
-                                                            (e.target as HTMLImageElement).style.display = "none";
-                                                        }}
-                                                    />
-                                                )}
 
-                                                {/* Content */}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <div>
-                                                            <h3 className="font-semibold text-foreground truncate">{ad.title}</h3>
-                                                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                                                                <span className="flex items-center gap-1">
-                                                                    <MapPin className="w-3 h-3" />
-                                                                    {ad.city}
-                                                                </span>
-                                                                <span className="flex items-center gap-1">
-                                                                    <Eye className="w-3 h-3" />
-                                                                    {ad.views || 0} views
-                                                                </span>
-                                                                <span className="flex items-center gap-1">
-                                                                    <Calendar className="w-3 h-3" />
-                                                                    Until {new Date(ad.validUntil).toLocaleDateString()}
-                                                                </span>
+                        {loading ? (
+                            <div className="flex items-center justify-center py-16">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                            </div>
+                        ) : myAds.length === 0 ? (
+                            <Card className="border-dashed border-2 border-border">
+                                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                                    <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+                                        <Megaphone className="w-8 h-8 text-muted-foreground" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">{t("profile.noDealsTitle")}</h3>
+                                    <p className="text-muted-foreground text-sm mb-6 max-w-sm">
+                                        {t("profile.noDealsDesc")}
+                                    </p>
+                                    <Link to="/promote">
+                                        <Button className="gap-2">
+                                            <Plus className="w-4 h-4" />
+                                            {t("profile.createFirst")}
+                                        </Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <div className="space-y-4">
+                                {myAds.map((ad, index) => (
+                                    <motion.div
+                                        key={ad.id || ad._id}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: index * 0.05 }}
+                                    >
+                                        <Card className={`border-border/50 bg-card shadow-sm transition-all duration-200 hover:shadow-card ${!ad.isActive ? "opacity-60" : ""}`}>
+                                            <CardContent className="p-4">
+                                                <div className="flex items-start gap-4">
+                                                    {ad.imageUrl && (
+                                                        <img
+                                                            src={ad.imageUrl}
+                                                            alt={ad.title}
+                                                            className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                                                            onError={(e) => {
+                                                                (e.target as HTMLImageElement).style.display = "none";
+                                                            }}
+                                                        />
+                                                    )}
+
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div>
+                                                                <h3 className="font-semibold text-foreground truncate">{ad.title}</h3>
+                                                                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                                                    <span className="flex items-center gap-1">
+                                                                        <MapPin className="w-3 h-3" />
+                                                                        {ad.city}
+                                                                    </span>
+                                                                    <span className="flex items-center gap-1">
+                                                                        <Eye className="w-3 h-3" />
+                                                                        {ad.views || 0} {t("profile.views")}
+                                                                    </span>
+                                                                    <span className="flex items-center gap-1">
+                                                                        <Calendar className="w-3 h-3" />
+                                                                        {t("adCard.validUntil")} {new Date(ad.validUntil).toLocaleDateString()}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                                <Badge
+                                                                    variant={ad.isActive ? "default" : "secondary"}
+                                                                    className="text-xs"
+                                                                >
+                                                                    {ad.isActive ? ad.discount : t("profile.inactive")}
+                                                                </Badge>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                                                    onClick={() => setSelectedAdForAnalytics(ad as unknown as Ad)}
+                                                                >
+                                                                    <BarChart2 className="w-4 h-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                                    onClick={() => handleDeleteAd(ad.id || ad._id!)}
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </Button>
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2 flex-shrink-0">
-                                                            <Badge
-                                                                variant={ad.isActive ? "default" : "secondary"}
-                                                                className="text-xs"
-                                                            >
-                                                                {ad.isActive ? ad.discount : "Inactive"}
-                                                            </Badge>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                                onClick={() => handleDeleteAd(ad.id || ad._id!)}
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
+
+                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                            {ad.keywords.slice(0, 4).map((keyword) => (
+                                                                <span
+                                                                    key={keyword}
+                                                                    className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-secondary/70 px-2 py-0.5 rounded-full"
+                                                                >
+                                                                    <Tag className="w-2.5 h-2.5" />
+                                                                    {keyword}
+                                                                </span>
+                                                            ))}
                                                         </div>
                                                     </div>
-
-                                                    {/* Keywords */}
-                                                    <div className="flex flex-wrap gap-1 mt-2">
-                                                        {ad.keywords.slice(0, 4).map((keyword) => (
-                                                            <span
-                                                                key={keyword}
-                                                                className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-secondary/70 px-2 py-0.5 rounded-full"
-                                                            >
-                                                                <Tag className="w-2.5 h-2.5" />
-                                                                {keyword}
-                                                            </span>
-                                                        ))}
-                                                    </div>
                                                 </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
-                            ))}
+                                            </CardContent>
+                                        </Card>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                    </motion.div>
+                ) : (
+                    /* Favorites Tab Content */
+                    <motion.div
+                        key="favorites"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                                <Heart className="w-5 h-5 text-red-500" />
+                                {t("profile.myFavorites", "Saved Favorites")}
+                            </h2>
                         </div>
-                    )}
-                </motion.div>
+
+                        {savedAds.length === 0 ? (
+                            <Card className="border-dashed border-2 border-border">
+                                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                                    <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+                                        <Heart className="w-8 h-8 text-muted-foreground" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                                        {t("profile.noFavoritesTitle", "No saved deals yet")}
+                                    </h3>
+                                    <p className="text-muted-foreground text-sm mb-6 max-w-sm">
+                                        {t("profile.noFavoritesDesc", "Browse deals and click the heart icon to save your favorites here for quick access later.")}
+                                    </p>
+                                    <Link to="/">
+                                        <Button>{t("adDetail.backToHome", "Browse Deals")}</Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {savedAds.map((ad, index) => (
+                                    <AdCard key={ad.id} ad={ad} index={index} />
+                                ))}
+                            </div>
+                        )}
+                    </motion.div>
+                )}
             </div>
+
+            {/* Global Analytics Dialog pop-up */}
+            <AnalyticsDialog
+                isOpen={!!selectedAdForAnalytics}
+                onClose={() => setSelectedAdForAnalytics(null)}
+                ad={selectedAdForAnalytics}
+            />
         </div>
     );
 }
