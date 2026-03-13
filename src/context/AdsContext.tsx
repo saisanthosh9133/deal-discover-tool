@@ -1,20 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { Ad, mockAds } from "@/data/mockAds";
-import api from "@/context/AuthContext";
-import { useAuth } from "@/context/AuthContext";
-
-interface ServerAd {
-  id?: string;
-  _id?: string;
-  title: string;
-  description: string;
-  imageUrl?: string;
-  keywords?: string[];
-  city: string;
-  discount?: string;
-  businessName: string;
-  validUntil?: string;
-}
+import { supabase } from "@/integrations/supabase/client";
+import { Ad } from "@/data/mockAds";
 
 interface AdsContextType {
   ads: Ad[];
@@ -27,39 +13,40 @@ interface AdsContextType {
 const AdsContext = createContext<AdsContextType | undefined>(undefined);
 
 export function AdsProvider({ children }: { children: ReactNode }) {
-  const [serverAds, setServerAds] = useState<Ad[]>([]);
+  const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated } = useAuth();
 
-  // Fetch ads from API, fallback to mock data if backend is down
   const fetchAds = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get("/ads?limit=50");
-      if (response.data.success && response.data.ads.length > 0) {
-        // Map server ads to match the Ad interface
-        const mapped: Ad[] = response.data.ads.map((ad: ServerAd) => ({
-          id: ad.id || ad._id,
-          title: ad.title,
-          description: ad.description,
-          imageUrl: ad.imageUrl || "",
-          keywords: ad.keywords || [],
-          city: ad.city,
-          discount: ad.discount || "SPECIAL OFFER",
-          businessName: ad.businessName,
-          validUntil: ad.validUntil ? new Date(ad.validUntil).toISOString().split("T")[0] : "",
-        }));
-        setServerAds(mapped);
-      } else {
-        // No ads from server — use mock data
-        setServerAds([]);
-      }
+
+      const { data, error: fetchError } = await supabase
+        .from("ads")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      const mapped: Ad[] = (data || []).map((ad) => ({
+        id: ad.id,
+        title: ad.title,
+        description: ad.description || "",
+        imageUrl: ad.image_url || "",
+        keywords: ad.keywords || [],
+        city: ad.city,
+        discount: ad.discount || "SPECIAL OFFER",
+        businessName: ad.business_name,
+        validUntil: ad.valid_until,
+      }));
+
+      setAds(mapped);
     } catch (err) {
-      console.warn("API unavailable, using mock data:", err);
-      setServerAds([]);
-      setError(null); // Don't show error — mock data covers it
+      console.error("Failed to fetch ads:", err);
+      setError("Failed to load ads");
+      setAds([]);
     } finally {
       setLoading(false);
     }
@@ -69,39 +56,24 @@ export function AdsProvider({ children }: { children: ReactNode }) {
     fetchAds();
   }, [fetchAds]);
 
-  // Combine server ads with mock ads (mock ads show when server has none)
-  const ads = serverAds.length > 0 ? serverAds : mockAds;
-
   const addAd = async (adData: Omit<Ad, "id">) => {
-    if (!isAuthenticated) {
-      throw new Error("You must be logged in to create an ad");
+    const { error: insertError } = await supabase.from("ads").insert({
+      title: adData.title,
+      description: adData.description,
+      image_url: adData.imageUrl,
+      keywords: adData.keywords,
+      city: adData.city,
+      discount: adData.discount,
+      business_name: adData.businessName,
+      valid_until: adData.validUntil,
+    });
+
+    if (insertError) {
+      console.error("Insert error:", insertError);
+      throw new Error(insertError.message);
     }
 
-    try {
-      const response = await api.post("/ads", {
-        title: adData.title,
-        description: adData.description,
-        imageUrl: adData.imageUrl,
-        keywords: adData.keywords,
-        city: adData.city,
-        discount: adData.discount,
-        businessName: adData.businessName,
-        validUntil: adData.validUntil,
-      });
-
-      if (response.data.success) {
-        // Re-fetch to get the latest ads
-        await fetchAds();
-      } else {
-        throw new Error(response.data.message || "Failed to create ad");
-      }
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
-      // If API fails, add locally as fallback
-      const errorMsg = axiosErr.response?.data?.message || axiosErr.message || "Failed to create ad";
-      console.error("Create ad error:", errorMsg);
-      throw new Error(errorMsg);
-    }
+    await fetchAds();
   };
 
   return (
