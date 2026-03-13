@@ -3,12 +3,23 @@ import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import path from "path";
+import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.js";
 import locationRoutes from "./routes/locations.js";
 import adRoutes from "./routes/ads.js";
 
+<<<<<<< HEAD
+// Load .env from server/ directory (works regardless of CWD)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, ".env") });
+// Also try project root .env as fallback
 dotenv.config();
+=======
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, ".env") });
+>>>>>>> fecfb75 (Role: You are a Senior Frontend Architect specializing in component consolidation and dry principles.)
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -71,6 +82,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`✓ Server running on http://localhost:${PORT}`);
+});
+
+server.on("error", (err) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(`✗ Port ${PORT} is already in use. Kill the old process:`);
+    console.error(`  Run: taskkill /F /IM node.exe  (Windows)`);
+    console.error(`  Run: kill $(lsof -t -i:${PORT}) (Mac/Linux)`);
+    process.exit(1);
+  }
+  throw err;
 });

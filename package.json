@@ -12,7 +12,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "seed:locations": "node server/seeds/seedLocations.js"
+    "seed:locations": "node server/seeds/seedLocations.js",
+    "seed:all-cities": "node server/seeds/seedAllCities.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -61,6 +62,7 @@
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.0",
     "lucide-react": "^0.462.0",
+    "mongodb": "^7.1.0",
     "mongoose": "^8.1.1",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",

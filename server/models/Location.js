@@ -24,12 +24,12 @@ const locationSchema = new mongoose.Schema({
   },
   region: {
     type: String,
-    enum: ["North", "South", "East", "West", "Northeast", "Central"],
+    enum: ["North", "South", "East", "West", "Northeast", "Central", "Other"],
   },
   tier: {
     type: String,
-    enum: ["Metro", "Tier1", "Tier2"],
-    default: "Tier1",
+    enum: ["Metro", "Tier1", "Tier2", "Tier3"],
+    default: "Tier3",
   },
   isActive: {
     type: Boolean,
@@ -50,7 +50,6 @@ const locationSchema = new mongoose.Schema({
 });
 
 // Index for faster searches
-locationSchema.index({ name: 1 });
 locationSchema.index({ state: 1 });
 locationSchema.index({ tier: 1 });
 locationSchema.index({ isActive: 1 });
