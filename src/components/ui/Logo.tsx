@@ -7,71 +7,49 @@ interface LogoProps {
 
 export const Logo = ({ size = "md", showText = true }: LogoProps) => {
   const sizes = {
-    sm: { icon: 32, text: "text-xl" },
-    md: { icon: 48, text: "text-2xl" },
-    lg: { icon: 72, text: "text-4xl" },
+    sm: { icon: 24, text: "text-lg" },
+    md: { icon: 36, text: "text-2xl" },
+    lg: { icon: 48, text: "text-4xl" },
   };
 
   const currentSize = sizes[size];
 
   return (
     <motion.div
-      className="flex items-center gap-3"
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
+      className="flex items-center gap-2"
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5 }}
     >
-      <div className="relative">
+      <div className="relative flex items-center justify-center">
         <svg
           width={currentSize.icon}
           height={currentSize.icon}
-          viewBox="0 0 100 100"
+          viewBox="0 0 24 24"
           fill="none"
-          className="text-primary"
+          stroke="#8B1D2D"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="transform"
         >
-          {/* Central circle */}
-          <circle
-            cx="50"
-            cy="50"
-            r="28"
-            stroke="currentColor"
-            strokeWidth="3"
-            fill="none"
-          />
-          {/* Radiating spikes */}
-          {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
-            <motion.line
-              key={i}
-              x1="50"
-              y1="50"
-              x2={50 + Math.cos((angle * Math.PI) / 180) * 45}
-              y2={50 + Math.sin((angle * Math.PI) / 180) * 45}
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ delay: i * 0.05, duration: 0.3 }}
-            />
-          ))}
-          {/* Inner design - D letter stylized */}
-          <text
-            x="50"
-            y="58"
-            textAnchor="middle"
-            fill="currentColor"
-            fontSize="24"
-            fontWeight="bold"
-            fontFamily="serif"
-          >
-            D
-          </text>
+          {/* Nautical Helm / Steering Wheel Icon */}
+          <circle cx="12" cy="12" r="7" />
+          <circle cx="12" cy="12" r="2" />
+          <path d="M12 2v3" />
+          <path d="M12 19v3" />
+          <path d="M22 12h-3" />
+          <path d="M5 12H2" />
+          <path d="M19.07 4.93l-2.12 2.12" />
+          <path d="M7.05 16.95l-2.12 2.12" />
+          <path d="M19.07 19.07l-2.12-2.12" />
+          <path d="M7.05 7.05l-2.12-2.12" />
         </svg>
       </div>
       {showText && (
-        <div className={`font-display font-bold tracking-tight ${currentSize.text}`}>
-          <span className="text-primary">Deal</span>
-          <span className="text-muted-foreground">Discover</span>
+        <div className={`font-bold tracking-tight ${currentSize.text} flex`}>
+          <span className="text-[#8B1D2D]">Deal</span>
+          <span className="text-[#6B5A5A]">Discover</span>
         </div>
       )}
     </motion.div>

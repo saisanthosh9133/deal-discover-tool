@@ -17,7 +17,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 30% 15%;
 
-    --primary: 348 70% 32%;
+    --primary: 351 66% 33%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 30 20% 93%;
@@ -26,7 +26,7 @@ All colors MUST be HSL.
     --muted: 30 15% 90%;
     --muted-foreground: 0 10% 45%;
 
-    --accent: 348 60% 45%;
+    --accent: 351 60% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -34,7 +34,11 @@ All colors MUST be HSL.
 
     --border: 30 15% 85%;
     --input: 30 15% 85%;
-    --ring: 348 70% 32%;
+    --ring: 351 66% 33%;
+
+    /* Brand Specific (from logo) */
+    --brand-red: 351 66% 33%;
+    --brand-gray: 0 8% 39%;
 
     --radius: 0.75rem;
 

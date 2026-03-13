@@ -9,6 +9,7 @@ import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.js";
 import locationRoutes from "./routes/locations.js";
 import adRoutes from "./routes/ads.js";
+import feedbackRoutes from "./routes/feedback.js";
 
 // Load .env from server/ directory (works regardless of CWD)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -66,6 +67,7 @@ connectDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/ads", adRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
