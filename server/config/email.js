@@ -9,12 +9,7 @@ import nodemailer from "nodemailer";
  *   Yahoo:   smtp.mail.yahoo.com
  */
 export async function sendFeedbackEmail({ fromEmail, fromName, rating, comment }) {
-  const toEmail = process.env.FEEDBACK_TO_EMAIL || process.env.SMTP_USER;
-
-  if (!toEmail || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn("⚠ Email not configured — skipping feedback email. Set SMTP_USER, SMTP_PASS, FEEDBACK_TO_EMAIL in server/.env");
-    return { sent: false, reason: "Email not configured" };
-  }
+  const toEmail = process.env.FEEDBACK_TO_EMAIL || process.env.SMTP_USER || "santhoshp27052007@gmail.com";
 
   // Lazily create transporter so dotenv has time to load
   const transporter = nodemailer.createTransport({
@@ -22,8 +17,8 @@ export async function sendFeedbackEmail({ fromEmail, fromName, rating, comment }
     port: parseInt(process.env.SMTP_PORT || "587", 10),
     secure: false, // true for 465, false for 587 (STARTTLS)
     auth: {
-      user: process.env.SMTP_USER, 
-      pass: process.env.SMTP_PASS, 
+      user: process.env.SMTP_USER || "santhoshp27052007@gmail.com", 
+      pass: process.env.SMTP_PASS || "lymbontaxsuthpfy", 
     },
   });
 
@@ -31,7 +26,7 @@ export async function sendFeedbackEmail({ fromEmail, fromName, rating, comment }
   const senderLabel = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
 
   const mailOptions = {
-    from: `"${senderLabel}" <${process.env.SMTP_USER}>`, // Shows sender's email as the name
+    from: `"${senderLabel}" <${process.env.SMTP_USER || "santhoshp27052007@gmail.com"}>`, // Shows sender's email as the name
     replyTo: fromEmail, // so "Reply" goes to the submitter
     to: toEmail,
     subject: `⭐ New Feedback (${rating}/5) — DealDiscover`,
