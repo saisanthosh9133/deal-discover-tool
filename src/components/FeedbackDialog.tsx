@@ -157,11 +157,9 @@ export function FeedbackDialog() {
                                             {...field}
                                         />
                                     </FormControl>
-                                    <FormItem>
-                                        <p className="text-[10px] text-muted-foreground mt-1">
-                                            We'll only use this to follow up if needed.
-                                        </p>
-                                    </FormItem>
+                                    <p className="text-[10px] text-muted-foreground mt-1">
+                                        We'll only use this to follow up if needed.
+                                    </p>
                                     <FormMessage />
                                 </FormItem>
                             )}

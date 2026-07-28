@@ -178,17 +178,17 @@ export default function AdminLocations() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">{t("admin.loading")}</p>
+        <p className="text-muted-foreground">{t("admin.loading")}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">{t("admin.title")}</h1>
-          <p className="text-gray-600">{t("admin.subtitle")}</p>
+          <p className="text-muted-foreground">{t("admin.subtitle")}</p>
         </div>
 
         {/* Form Card */}
@@ -300,7 +300,7 @@ export default function AdminLocations() {
                 </thead>
                 <tbody>
                   {locations.map((location) => (
-                    <tr key={location._id} className="border-b hover:bg-gray-50 transition-colors">
+                    <tr key={location._id} className="border-b hover:bg-secondary/50 transition-colors">
                       <td className="py-3 px-4">
                         <p className="font-medium">{location.displayName}</p>
                       </td>
@@ -319,13 +319,13 @@ export default function AdminLocations() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex gap-2">
-                          <button onClick={() => handleToggle(location._id)} className="p-1 hover:bg-gray-200 rounded transition-colors" title={location.isActive ? "Deactivate" : "Activate"}>
+                          <button onClick={() => handleToggle(location._id)} className="p-1 hover:bg-secondary rounded transition-colors" title={location.isActive ? "Deactivate" : "Activate"}>
                             {location.isActive ? <ToggleRight className="w-4 h-4 text-green-600" /> : <ToggleLeft className="w-4 h-4 text-gray-400" />}
                           </button>
-                          <button onClick={() => handleEdit(location)} className="p-1 hover:bg-gray-200 rounded transition-colors" title="Edit">
+                          <button onClick={() => handleEdit(location)} className="p-1 hover:bg-secondary rounded transition-colors" title="Edit">
                             <Edit2 className="w-4 h-4 text-blue-600" />
                           </button>
-                          <button onClick={() => handleDelete(location._id)} className="p-1 hover:bg-gray-200 rounded transition-colors" title="Delete">
+                          <button onClick={() => handleDelete(location._id)} className="p-1 hover:bg-secondary rounded transition-colors" title="Delete">
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </button>
                         </div>

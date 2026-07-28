@@ -1,10 +1,11 @@
 import express from "express";
 import Feedback from "../models/Feedback.js";
+import { sendFeedbackEmail } from "../config/email.js";
 
 const router = express.Router();
 
 // @route   POST api/feedback
-// @desc    Submit user feedback
+// @desc    Submit user feedback + send email notification
 // @access  Public
 router.post("/", async (req, res) => {
     try {
@@ -17,19 +18,34 @@ router.post("/", async (req, res) => {
             });
         }
 
-        const feedback = new Feedback({
+        // 1. Try saving to database (may fail if DB is down)
+        let savedFeedback = null;
+        try {
+            const feedback = new Feedback({
+                rating,
+                comment,
+                email,
+                user: userId || null,
+            });
+            savedFeedback = await feedback.save();
+        } catch (dbError) {
+            console.warn("⚠ Could not save feedback to DB:", dbError.message);
+            // Continue — still send the email
+        }
+
+        // 2. Send email notification to the site owner
+        const emailResult = await sendFeedbackEmail({
+            fromEmail: email || "anonymous@dealdiscover.app",
+            fromName: null,
             rating,
             comment,
-            email,
-            user: userId || null,
         });
-
-        await feedback.save();
 
         res.status(201).json({
             success: true,
             message: "Feedback submitted successfully. Thank you!",
-            feedback,
+            feedback: savedFeedback,
+            emailSent: emailResult.sent,
         });
     } catch (error) {
         console.error("Feedback submission error:", error);

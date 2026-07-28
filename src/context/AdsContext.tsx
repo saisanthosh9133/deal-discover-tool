@@ -105,6 +105,7 @@ export function AdsProvider({ children }: { children: ReactNode }) {
         imageUrl: adData.imageUrl,
         keywords: adData.keywords,
         city: adData.city,
+        location: adData.location,
         discount: adData.discount,
         businessName: adData.businessName,
         validUntil: adData.validUntil,

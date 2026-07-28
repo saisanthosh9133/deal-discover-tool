@@ -25,7 +25,7 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
 
   if (isLoading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (adminOnly && user?.role !== "admin") return <Navigate to="/" replace />;
+  if (adminOnly && user?.role !== "ADMIN") return <Navigate to="/" replace />;
 
   return <>{children}</>;
 };
