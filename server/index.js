@@ -69,8 +69,8 @@ app.get("/api/health", (req, res) => {
     success: true, 
     message: "Server is running",
     dbState: mongoose.connection.readyState,
-    hasUri: !!process.env.MONGODB_URI,
-    uriPrefix: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 15) : null
+    hasUri: !!(process.env.MONGODB_URI || "fallback"),
+    error: global.dbConnectionError
   });
 });
 
