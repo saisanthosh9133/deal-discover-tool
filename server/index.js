@@ -45,15 +45,7 @@ app.use("/api/auth", authLimiter);
 
 // Middleware
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like curl / Postman)
-    if (!origin) return callback(null, true);
-    // Allow any localhost port for local development
-    if (/^http:\/\/localhost:\d+$/.test(origin) || origin === process.env.CLIENT_URL) {
-      return callback(null, true);
-    }
-    callback(new Error("Not allowed by CORS"));
-  },
+  origin: true, // Allow all origins for Vercel compatibility
   credentials: true,
 }));
 
@@ -89,16 +81,22 @@ app.use((err, req, res, next) => {
   });
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`✓ Server running on http://localhost:${PORT}`);
-});
+// Only listen locally (Vercel uses the exported app instead)
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  const server = app.listen(PORT, () => {
+    console.log(`✓ Server running on http://localhost:${PORT}`);
+  });
 
-server.on("error", (err) => {
-  if (err.code === "EADDRINUSE") {
-    console.error(`✗ Port ${PORT} is already in use. Kill the old process:`);
-    console.error(`  Run: kill $(lsof -t -i:${PORT})  (Mac/Linux)`);
-    console.error(`  Run: taskkill /F /IM node.exe    (Windows)`);
-    process.exit(1);
-  }
-  throw err;
-});
+  server.on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`✗ Port ${PORT} is already in use. Kill the old process:`);
+      console.error(`  Run: kill $(lsof -t -i:${PORT})  (Mac/Linux)`);
+      console.error(`  Run: taskkill /F /IM node.exe    (Windows)`);
+      process.exit(1);
+    }
+    throw err;
+  });
+}
+
+// Export the Express API for Vercel Serverless Functions
+export default app;
