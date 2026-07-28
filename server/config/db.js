@@ -7,6 +7,6 @@ export const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error(`✗ Database connection failed: ${error.message}`);
-    process.exit(1);
+    console.error(`  Server will continue running but API routes requiring DB will fail.`);
   }
 };

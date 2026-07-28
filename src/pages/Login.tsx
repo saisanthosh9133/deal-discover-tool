@@ -41,7 +41,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-3 text-center">
           <div className="flex justify-center mb-2">
@@ -91,7 +91,7 @@ export default function Login() {
 
             <Button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
+              className="w-full"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -105,11 +105,11 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             {t("login.noAccount")}{" "}
             <Link
               to="/register"
-              className="font-semibold text-indigo-600 hover:text-indigo-700"
+              className="font-semibold text-primary hover:text-primary/80"
             >
               {t("login.createOne")}
             </Link>

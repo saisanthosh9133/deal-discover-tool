@@ -57,10 +57,11 @@ userSchema.methods.comparePassword = async function (plainPassword) {
   return await bcrypt.compare(plainPassword, this.password);
 };
 
-// Remove password from JSON response
+// Remove password from JSON response and expose id matching the frontend interface
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
+  user.id = user._id.toString();
   return user;
 };
 

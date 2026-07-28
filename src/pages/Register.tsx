@@ -78,7 +78,7 @@ export default function Register() {
   const strength = passwordStrength();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-3 text-center">
           <div className="flex justify-center mb-2">
@@ -139,7 +139,7 @@ export default function Register() {
               />
               {password && (
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all ${strength.level === 1
                           ? "w-1/3 bg-red-500"
@@ -179,7 +179,7 @@ export default function Register() {
 
             <Button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
+              className="w-full"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -193,9 +193,9 @@ export default function Register() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             {t("register.haveAccount")}{" "}
-            <Link to="/login" className="font-semibold text-indigo-600 hover:text-indigo-700">
+            <Link to="/login" className="font-semibold text-primary hover:text-primary/80">
               {t("register.signIn")}
             </Link>
           </div>

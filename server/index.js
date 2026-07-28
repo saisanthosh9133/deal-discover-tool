@@ -9,6 +9,7 @@ import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.js";
 import locationRoutes from "./routes/locations.js";
 import adRoutes from "./routes/ads.js";
+import feedbackRoutes from "./routes/feedback.js";
 
 // Load .env from server/ directory (works regardless of CWD)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -17,7 +18,7 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Security middleware
 app.use(helmet());
@@ -66,6 +67,7 @@ connectDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/ads", adRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -78,6 +80,7 @@ app.use((req, res) => {
 });
 
 // Error handler
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(err.status || 500).json({
@@ -93,8 +96,8 @@ const server = app.listen(PORT, () => {
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
     console.error(`✗ Port ${PORT} is already in use. Kill the old process:`);
-    console.error(`  Run: taskkill /F /IM node.exe  (Windows)`);
-    console.error(`  Run: kill $(lsof -t -i:${PORT}) (Mac/Linux)`);
+    console.error(`  Run: kill $(lsof -t -i:${PORT})  (Mac/Linux)`);
+    console.error(`  Run: taskkill /F /IM node.exe    (Windows)`);
     process.exit(1);
   }
   throw err;
