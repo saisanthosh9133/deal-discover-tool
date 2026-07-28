@@ -61,9 +61,17 @@ app.use("/api/locations", locationRoutes);
 app.use("/api/ads", adRoutes);
 app.use("/api/feedback", feedbackRoutes);
 
+import mongoose from "mongoose";
+
 // Health check
 app.get("/api/health", (req, res) => {
-  res.json({ success: true, message: "Server is running" });
+  res.json({ 
+    success: true, 
+    message: "Server is running",
+    dbState: mongoose.connection.readyState,
+    hasUri: !!process.env.MONGODB_URI,
+    uriPrefix: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 15) : null
+  });
 });
 
 // 404 handler
